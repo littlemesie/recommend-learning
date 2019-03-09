@@ -103,5 +103,5 @@ venv.bak/
 # mypy
 .mypy_cache/git
 .idea/
-data/
 runs/
+.DS_Store
