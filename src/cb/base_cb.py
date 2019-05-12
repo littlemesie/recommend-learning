@@ -9,16 +9,19 @@
 
 import numpy as np
 import pandas as pd
+from cb.item_profiles import item_features
+from cb.user_profile import user_features
+from cb.user_profile import user_item_rating
 
 
-def cos_measure(item_feature_vector, user_rated_items_matrix):
+def cos_measure(item_feature_vector, user_rated_items_matrix, rate=0.001):
     """
     计算item之间的余弦夹角相似度
     :param item_feature_vector: 待测量的item特征向量
     :param user_rated_items_matrix: 用户已评分的items的特征矩阵
     :return: 待计算item与用户已评分的items的余弦夹角相识度的向量
     """
-    x_c = (item_feature_vector * user_rated_items_matrix.T) + 0.0000001
+    x_c = (item_feature_vector * user_rated_items_matrix.T) + rate
     mod_x = np.sqrt(item_feature_vector * item_feature_vector.T)
     mod_c = np.sqrt((user_rated_items_matrix * user_rated_items_matrix.T).diagonal())
     cos_xc = x_c / (mod_x * mod_c)
@@ -74,37 +77,32 @@ def comp_user_feature(user_rated_vector, item_feature_matrix):
     return user_feature_tol
 
 
-def CB_recommend_estimate(user_feature, item_feature_matrix, item):
+def cb_recommend_estimate(user, item_feature_matrix, user_item_matrix, N=10):
     """
     基于内容的推荐算法对item的评分进行估计
-    :param item_feature_matrix: 包含所有item的特征矩阵
-    :param user_feature: 待估计用户的对item的评分向量
-    :param item: 待估计item的编号
-    :return: 基于内容的推荐算法对item的评分进行估计
+    :param user: 需要推荐的用户
+    :param item_feature_matrix:
+    :param user_item_matrix:
+    :param N:
+    :return:
     """
-    # #得到item的引索以及特征矩阵
-    # item_index = item_feature_matrix.index
-    # item_feature = item_feature_matrix.values
+    # 用户有过评分的item
+    user_rating_item = user_item_matrix[user][0]
+    # 用户有过评分的item的特征矩阵
+    user_rating_feature_matrix = np.matrix([item_feature_matrix[rate] for rate in user_rating_item])
+    # 用户没有评分的矩阵
+    # user_no_rating_feature_matrix = [value for item, value in item_feature_matrix.items() if item not in user_rating_item]
 
-    #得到所有user评分的item的引索
-    user_item_index = user_feature.index
-
-    #某一用户已有评分item的评分向量和引索以及item的评分矩阵
-    user_rated_vector = np.matrix(user_feature.loc[user_feature > 0].values)
-    user_rated_items = map(int, user_item_index[user_feature > 0].values)
-    user_rated_items_matrix = np.matrix(item_feature_matrix.loc[user_rated_items, :].values)
-
-
-    #待评分itme的特征向量，函数中给出的是该item的Id
-    item_feature_vector = np.matrix(item_feature_matrix.loc[item].values)
-
-    #得到待计算item与用户已评分的items的余弦夹角相识度的向量
-    cos_xc = cos_measure(item_feature_vector, user_rated_items_matrix)
-
-    #计算uesr对该item的评分估计
-    rate_hat = estimate_rate(user_rated_vector, cos_xc)
-
-    return rate_hat
+    for item, value in item_feature_matrix.items():
+        if item not in user_rating_item:
+            # 得到待计算item与用户已评分的items的余弦夹角相识度的向量
+            cos_xc = cos_measure(np.matrix(item_feature_matrix[item]), user_rating_feature_matrix)
+            # 计算uesr对该item的评分估计
+            # rate_hat = estimate_rate(user_rating_feature_matrix, cos_xc)
+            # print(user_rating_feature_matrix.shape, cos_xc.shape)
+            cos_xc = np.mat(cos_xc).getA()
+            print(cos_xc[0])
+            break
 
 
 def CB_recommend_top_K(user_feature, item_feature_matrix, K):
@@ -137,8 +135,8 @@ def CB_recommend_top_K(user_feature, item_feature_matrix, K):
 
 
 if __name__ == '__main__':
-    movies_feature = pd.read_csv('../../data/ml-latest-small/movies_feature.csv', index_col=0)
-    user_rating = pd.read_csv('../../data/ml-latest-small/user-rating.csv', index_col=0)
-    user_feature = user_rating.loc[100,:]
-    print(CB_recommend_estimate(user_feature, movies_feature, 10))
-    print(CB_recommend_top_K(user_feature, movies_feature, 10))
+
+    item_feature_matrix = item_features()
+    user_item_matrix = user_item_rating()
+    uid = "1"
+    cb_recommend_estimate(uid,item_feature_matrix,user_item_matrix)

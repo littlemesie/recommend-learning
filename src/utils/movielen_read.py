@@ -8,6 +8,7 @@
 """
 import os
 import random
+import codecs
 
 base_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 
@@ -20,13 +21,13 @@ def load_file(filename):
                 continue
             yield line.strip('\r\n')
 
-def loadfile(filename):
+def loadfile(filename, encoding='UTF-8'):
     """
     根据文件名载入数据
     :param filename:
     :return:
     """
-    with open(filename, "r") as f:
+    with open(filename, "r",encoding=encoding) as f:
         for line in f:
             yield line
 
