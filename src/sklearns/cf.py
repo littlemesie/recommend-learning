@@ -1,13 +1,11 @@
 #!/usr/bin/python
 # coding:utf8
 
-import sys
 import math
 from operator import itemgetter
 
 import numpy as np
 import pandas as pd
-from scipy.sparse.linalg import svds
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics.pairwise import pairwise_distances
@@ -60,7 +58,6 @@ def predict(rating, similarity, type='user'):
         pred = rating.dot(similarity) / np.array([np.abs(similarity).sum(axis=1)])
     else:
         # 求出每一个用户，所有电影的综合评分（axis=0 表示对列操作， 1表示对行操作）
-        # print "rating=", np.shape(rating)
         mean_user_rating = rating.mean(axis=1)
         rating_diff = (rating - mean_user_rating[:, np.newaxis])
 
