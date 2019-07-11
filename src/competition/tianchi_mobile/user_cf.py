@@ -2,7 +2,7 @@
 import random
 import math
 from operator import itemgetter
-from tianchi_mobile import read_data
+from competition.tianchi_mobile import read_data
 
 
 class UserCF():
