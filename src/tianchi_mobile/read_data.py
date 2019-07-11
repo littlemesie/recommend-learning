@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+import time
 import numpy as np
 import pandas as pd
 
@@ -43,8 +44,23 @@ def analyze_data():
     #         pay_count += 1
     # print(click_count, collect_count, add_cart_count, pay_count)
 
-def split_data():
+def split_data_v1(train_rate=1):
     """切分数据"""
+    date = time.strftime("%Y-%m-%d", time.localtime())
+    path = base_path + "tianchi_mobile_recommend_train_user.csv"
+    for line in load_file(path):
+        arr = line.split(",")
+
+    # user_df = pd.read_csv(base_path + "tianchi_mobile_recommend_train_user.csv")
+    # user_df.drop(['user_geohash', 'time'], axis=1)
+    # num = int(len(user_df) * train_rate)
+    # train_user = user_df[:num]
+    # test_user = user_df[num:]
+    # return train_user, test_user
 
 if __name__ == '__main__':
-    analyze_data()
+    # analyze_data()
+    # split_data_v1()
+    train_data_matrix = np.zeros((2, 3))
+    train_data_matrix[0,0] = 1
+    print(train_data_matrix)
