@@ -1,8 +1,10 @@
 import xlearn as xl
+from utils import item_profiles
+from utils import movielen_read
 
 fm_model = xl.create_fm()
 fm_model.setTrain("/Volumes/d/python/xlearn/demo/classification/criteo_ctr/small_train.txt")  # Training data
-fm_model.setValidate("/Volumes/d/python/xlearn/demo/classification/criteo_ctr/small_test.txt")  # Validation data
+# fm_model.setValidate("/Volumes/d/python/xlearn/demo/classification/criteo_ctr/small_test.txt")  # Validation data
 
 # param:
 #  0. binary classification
@@ -33,3 +35,12 @@ class FM():
 
     def __init__(self):
         pass
+
+    def load_data(self):
+        item_features = item_profiles.item_features()
+        print(item_features)
+
+
+if __name__ == '__main__':
+    fm = FM()
+    # fm.load_data()
