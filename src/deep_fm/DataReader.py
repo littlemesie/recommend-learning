@@ -46,18 +46,18 @@ class FeatureDictionary(object):
 
             else:
                 us = df[col].unique()
-                print(us)
-                self.feat_dict[col] = dict(zip(us,range(tc,len(us)+tc)))
+                # print(col, ':', us)
+                self.feat_dict[col] = dict(zip(us, range(tc, len(us)+tc)))
                 tc += len(us)
-
+        print(self.feat_dict)
         self.feat_dim = tc
 
 
 class DataParser(object):
-    def __init__(self,feat_dict):
+    def __init__(self, feat_dict):
         self.feat_dict = feat_dict
 
-    def parse(self,infile=None,df=None,has_label=False):
+    def parse(self, infile=None, df=None, has_label=False):
         assert not ((infile is None) and (df is None)), "infile or df at least one is set"
         assert not ((infile is not None) and (df is not None)), "only one can be set"
 
@@ -72,14 +72,14 @@ class DataParser(object):
             dfi.drop(['id','target'],axis=1,inplace=True)
         else:
             ids = dfi['id'].values.tolist()
-            dfi.drop(['id'],axis=1,inplace=True)
+            dfi.drop(['id'], axis=1, inplace=True)
         # dfi for feature index
         # dfv for feature value which can be either binary (1/0) or float (e.g., 10.24)
         dfv = dfi.copy()
         for col in dfi.columns:
             if col in self.feat_dict.ignore_cols:
-                dfi.drop(col,axis=1,inplace=True)
-                dfv.drop(col,axis=1,inplace=True)
+                dfi.drop(col, axis=1, inplace=True)
+                dfv.drop(col, axis=1, inplace=True)
                 continue
             if col in self.feat_dict.numeric_cols:
                 dfi[col] = self.feat_dict.feat_dict[col]
@@ -91,8 +91,8 @@ class DataParser(object):
         xv = dfv.values.tolist()
 
         if has_label:
-            return xi,xv,y
+            return xi, xv, y
         else:
-            return xi,xv,ids
+            return xi, xv, ids
 
 

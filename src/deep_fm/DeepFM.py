@@ -57,23 +57,23 @@ class DeepFM(BaseEstimator, TransformerMixin):
             tf.set_random_seed(self.random_seed)
 
             self.feat_index = tf.placeholder(tf.int32,
-                                             shape=[None,None],
+                                             shape=[None, None],
                                              name='feat_index')
             self.feat_value = tf.placeholder(tf.float32,
-                                           shape=[None,None],
+                                           shape=[None, None],
                                            name='feat_value')
 
-            self.label = tf.placeholder(tf.float32,shape=[None,1],name='label')
-            self.dropout_keep_fm = tf.placeholder(tf.float32,shape=[None],name='dropout_keep_fm')
-            self.dropout_keep_deep = tf.placeholder(tf.float32,shape=[None],name='dropout_deep_deep')
-            self.train_phase = tf.placeholder(tf.bool,name='train_phase')
+            self.label = tf.placeholder(tf.float32, shape=[None, 1], name='label')
+            self.dropout_keep_fm = tf.placeholder(tf.float32, shape=[None], name='dropout_keep_fm')
+            self.dropout_keep_deep = tf.placeholder(tf.float32, shape=[None], name='dropout_deep_deep')
+            self.train_phase = tf.placeholder(tf.bool, name='train_phase')
 
             self.weights = self._initialize_weights()
 
             # model
-            self.embeddings = tf.nn.embedding_lookup(self.weights['feature_embeddings'],self.feat_index) # N * F * K
-            feat_value = tf.reshape(self.feat_value,shape=[-1,self.field_size,1])
-            self.embeddings = tf.multiply(self.embeddings,feat_value)
+            self.embeddings = tf.nn.embedding_lookup(self.weights['feature_embeddings'], self.feat_index) # N * F * K
+            feat_value = tf.reshape(self.feat_value, shape=[-1, self.field_size, 1])
+            self.embeddings = tf.multiply(self.embeddings, feat_value)
 
 
             # first order term
@@ -105,7 +105,7 @@ class DeepFM(BaseEstimator, TransformerMixin):
                 self.y_deep = tf.nn.dropout(self.y_deep,self.dropout_keep_deep[i+1])
 
 
-            #----DeepFM---------
+            #----deep_fm---------
             if self.use_fm and self.use_deep:
                 concat_input = tf.concat([self.y_first_order, self.y_second_order, self.y_deep], axis=1)
             elif self.use_fm:
@@ -215,11 +215,11 @@ class DeepFM(BaseEstimator, TransformerMixin):
         return weights
 
 
-    def get_batch(self,Xi,Xv,y,batch_size,index):
+    def get_batch(self, Xi, Xv, y, batch_size, index):
         start = index * batch_size
         end = (index + 1) * batch_size
         end = end if end < len(y) else len(y)
-        return Xi[start:end],Xv[start:end],[[y_] for y_ in y[start:end]]
+        return Xi[start:end], Xv[start:end], [[y_] for y_ in y[start:end]]
 
     # shuffle three lists simutaneously
     def shuffle_in_unison_scary(self, a, b, c):
@@ -273,7 +273,7 @@ class DeepFM(BaseEstimator, TransformerMixin):
         return y_pred
 
 
-    def fit_on_batch(self,Xi,Xv,y):
+    def fit_on_batch(self, Xi, Xv,y):
         feed_dict = {self.feat_index:Xi,
                      self.feat_value:Xv,
                      self.label:y,
@@ -281,7 +281,7 @@ class DeepFM(BaseEstimator, TransformerMixin):
                      self.dropout_keep_deep:self.dropout_dep,
                      self.train_phase:True}
 
-        loss,opt = self.sess.run([self.loss,self.optimizer],feed_dict=feed_dict)
+        loss,opt = self.sess.run([self.loss, self.optimizer], feed_dict=feed_dict)
 
         return loss
 
