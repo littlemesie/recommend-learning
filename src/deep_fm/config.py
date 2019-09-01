@@ -1,5 +1,5 @@
-TRAIN_FILE = "data/train.csv"
-TEST_FILE = "data/test.csv"
+TRAIN_FILE = "../../data/ctr/train.csv"
+TEST_FILE = "../../data/ctr/test.csv"
 
 SUB_DIR = "output"
 
