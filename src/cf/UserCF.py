@@ -115,6 +115,7 @@ class UserBasedCF():
                 if movie in watched_movies:
                     continue
                 rank.setdefault(movie, 0)
+                # rank[i] += wuv * rvi (rvi评分)
                 rank[movie] += wuv
         print(sorted(rank.items(), key=itemgetter(1), reverse=True)[0:N])
         return sorted(rank.items(), key=itemgetter(1), reverse=True)[0:N]
