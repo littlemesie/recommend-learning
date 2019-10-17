@@ -1,9 +1,7 @@
-# UserCF基于用户的协同过滤推荐实现 
+# 协同过滤推荐实现 
 
-```UserCF的思想见博客：http://blog.csdn.net/u012050154/article/details/52268057    
-UserCF.py是代码实现
+- [UserCF原理](http://blog.csdn.net/u012050154/article/details/52268057)
 
-关于推荐系统的介绍见博客：http://blog.csdn.net/u012050154/article/details/52267712   
+- [ItemCf原理](http://blog.csdn.net/u012050154/article/details/52267712)
 
-ItemCf.py是代码实现 
-```
+- [ALS算法](https://zhuanlan.zhihu.com/p/47584486)
