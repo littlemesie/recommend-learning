@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
-from ..utils.matrix import Matrix
+from utils.matrix import Matrix
 from random import random
 
 
@@ -41,8 +41,7 @@ class ALS(object):
 
         # Process user ids.
         self.user_ids = tuple((set(map(lambda x: x[0], X))))
-        self.user_ids_dict = dict(map(lambda x: x[::-1],
-                                      enumerate(self.user_ids)))
+        self.user_ids_dict = dict(map(lambda x: x[::-1], enumerate(self.user_ids)))
 
         # Process item ids.
         self.item_ids = tuple((set(map(lambda x: x[1], X))))
