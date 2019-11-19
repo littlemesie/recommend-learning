@@ -1,5 +1,7 @@
 import pandas as pd
-
+"""
+处理数据成libsvm和libsvm格式
+"""
 NUMERIC_COLS = [
     "ps_reg_01", "ps_reg_02", "ps_reg_03",
     "ps_car_12", "ps_car_13", "ps_car_14", "ps_car_15",
@@ -111,7 +113,7 @@ def generation_libsvm(data_path, new_path):
 def generation_libffm(data_path, new_path):
     """生成libsvm格式文件"""
     df_data = pd.read_csv(data_path)
-    df_data.drop(['id'],axis=1,inplace=True)
+    df_data.drop(['id'], axis=1, inplace=True)
     df_data.to_csv(new_path, index=False, header=None)
 
 if __name__ == '__main__':
