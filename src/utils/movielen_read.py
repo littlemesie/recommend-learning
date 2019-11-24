@@ -38,7 +38,7 @@ def read_rating_data(path=base_path + "ml-1m/ratings.dat", train_rate=1., seed=1
     载入评分数据
     @param path:  文件路径
     @param train_rate:   训练集所占整个数据集的比例，默认为1，表示所有的返回数据都是训练集
-    @return: (训练集，测试集)
+    @return: (训练集，测试集) list -- userId, movieId, rating
     """
     trainset = list()
     testset = list()

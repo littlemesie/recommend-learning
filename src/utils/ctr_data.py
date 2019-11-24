@@ -1,5 +1,8 @@
 import pandas as pd
 
+"""
+处理数据成libsvm和libsvm格式
+"""
 NUMERIC_COLS = [
     "ps_reg_01", "ps_reg_02", "ps_reg_03",
     "ps_car_12", "ps_car_13", "ps_car_14", "ps_car_15",
@@ -23,7 +26,9 @@ def gen_feat_dict(df):
     tc = 0
     feat_dict = {}
     dfc = df.copy()
-    dfc.drop(['target'], axis=1, inplace=True)
+    if 'target' in dfc.columns:
+        dfc.drop(['target'], axis=1, inplace=True)
+
     for col in dfc.columns:
         if col in IGNORE_COLS:
             continue
@@ -113,7 +118,8 @@ def generation_libffm(data_path, new_path):
     df_data.drop(['id'],axis=1,inplace=True)
     df_data.to_csv(new_path, index=False, header=None)
 
+
 if __name__ == '__main__':
-    data_path = '../../data/ctr/train.csv'
-    new_path = 'train.csv'
+    data_path = '../../data/ctr/test.csv'
+    new_path = 'test.csv'
     generation_libsvm(data_path, new_path)
