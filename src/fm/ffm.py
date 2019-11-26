@@ -45,20 +45,21 @@ def createZeroDimensionWeight():
     tf_weights = tf.Variable(weights)
     return tf_weights
 
-def inference(input_x,input_x_field,zeroWeights,oneDimWeights,thirdWeight):
+def inference(input_x, input_x_field, zeroWeights, oneDimWeights, thirdWeight):
     """计算回归模型输出的值"""
 
-    secondValue = tf.reduce_sum(tf.multiply(oneDimWeights,input_x,name='secondValue'))
+    secondValue = tf.reduce_sum(tf.multiply(oneDimWeights, input_x, name='secondValue'))
 
     firstTwoValue = tf.add(zeroWeights, secondValue, name="firstTwoValue")
 
-    thirdValue = tf.Variable(0.0,dtype=tf.float32)
+    thirdValue = tf.Variable(0.0, dtype=tf.float32)
+
     input_shape = input_x_size
 
     for i in range(input_shape):
         featureIndex1 = i
         fieldIndex1 = int(input_x_field[i])
-        for j in range(i+1,input_shape):
+        for j in range(i+1, input_shape):
             featureIndex2 = j
             fieldIndex2 = int(input_x_field[j])
             vectorLeft = tf.convert_to_tensor([[featureIndex1,fieldIndex2,i] for i in range(vector_dimension)])
@@ -86,6 +87,7 @@ def inference(input_x,input_x_field,zeroWeights,oneDimWeights,thirdWeight):
     return tf.add(firstTwoValue,thirdValue)
 
 def gen_data():
+    """生成训练数据集"""
     labels = [-1, 1]
     y = [np.random.choice(labels, 1)[0] for _ in range(all_data_size)]
     x_field = [i // 10 for i in range(input_x_size)]
@@ -99,32 +101,27 @@ if __name__ == '__main__':
 
 
     input_x = tf.placeholder(tf.float32,[input_x_size ])
-    with tf.Session() as sess:
-
-        sess.run(print(input_x))
     input_y = tf.placeholder(tf.float32)
-    #
 
     lambda_w = tf.constant(0.001, name='lambda_w')
-    # lambda_v = tf.constant(0.001, name='lambda_v')
-    #
-    # zeroWeights = createZeroDimensionWeight()
-    #
-    # oneDimWeights = createOneDimensionWeight(input_x_size)
-    #
-    # thirdWeight = createTwoDimensionWeight(input_x_size,  # 创建二次项的权重变量
-    #                                        field_size,
-    #                                        vector_dimension)  # n * f * k
+    lambda_v = tf.constant(0.001, name='lambda_v')
 
-    # y_ = inference(input_x, trainx_field,zeroWeights,oneDimWeights,thirdWeight)
-    #
-    # l2_norm = tf.reduce_sum(
-    #     tf.add(
-    #         tf.multiply(lambda_w, tf.pow(oneDimWeights, 2)),
-    #         tf.reduce_sum(tf.multiply(lambda_v, tf.pow(thirdWeight, 2)),axis=[1,2])
-    #     )
-    # )
-    #
+    zeroWeights = createZeroDimensionWeight()
+
+    oneDimWeights = createOneDimensionWeight(input_x_size)
+
+    # 创建二次项的权重变量 n * f * k
+    thirdWeight = createTwoDimensionWeight(input_x_size, field_size, vector_dimension)
+
+    y_ = inference(input_x, trainx_field, zeroWeights, oneDimWeights, thirdWeight)
+
+    l2_norm = tf.reduce_sum(
+        tf.add(
+            tf.multiply(lambda_w, tf.pow(oneDimWeights, 2)),
+            tf.reduce_sum(tf.multiply(lambda_v, tf.pow(thirdWeight, 2)), axis=[1, 2])
+        )
+    )
+
     # loss = tf.log(1 + tf.exp(input_y * y_)) + l2_norm
     #
     # train_step = tf.train.GradientDescentOptimizer(learning_rate=lr).minimize(loss)
@@ -147,7 +144,9 @@ if __name__ == '__main__':
     #             writer.close()
     #     #
 
-
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        print(sess.run(y_))
 
 
 
