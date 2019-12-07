@@ -1,5 +1,5 @@
 import pandas as pd
-
+from sklearn.model_selection import train_test_split
 """
 处理数据成libsvm和libsvm格式
 """
@@ -26,9 +26,11 @@ def load_data(train_path, test_path):
     data = pd.read_csv(train_path)
     train_data = data[need_cols]
     train_label = data["target"]
-    test_data = pd.read_csv(test_path)[need_cols]
-    # print(train_label.head(100))
-    return train_data, test_data, train_label
+
+    train_X, valid_X, train_y, valid_y = train_test_split(train_data, train_label, test_size=0.2)
+    test_y = pd.read_csv(test_path)[need_cols]
+
+    return train_X, valid_X, train_y, valid_y, test_y
 
 
 def gen_feat_dict(df):
