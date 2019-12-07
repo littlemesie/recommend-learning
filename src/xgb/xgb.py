@@ -23,7 +23,7 @@ def tuning_model(train_X, train_y):
 
     xlf = xgb.XGBClassifier(
         booster="gbtree",
-        objective='rank:pairwise',
+        objective='binary:logistic',
         eval_metric="auc",
         gamma=0.2,
         min_child_weight=1.2,
@@ -73,12 +73,13 @@ def train_model(train_X, valid_X, train_y, valid_y):
 
     watchlist = [(dtrain, 'train')]
     model_path = "model/xgb.pkl"
-    try:
-        model = load_model(model_path)
-    except:
-        pass
-        model = xgb.train(params, dtrain, evals=watchlist)
-        save_model(model_path, model)
+    model = xgb.train(params, dtrain, evals=watchlist)
+    # try:
+    #     model = load_model(model_path)
+    # except:
+    #     pass
+    #     model = xgb.train(params, dtrain, evals=watchlist)
+    #     save_model(model_path, model)
     prob = np.array(model.predict(dtest))
     fpr, tpr, thresholds = roc_curve(valid_y, prob)
     aucs = auc(fpr, tpr)
@@ -96,6 +97,6 @@ if __name__ == '__main__':
     train_path = '../../data/ctr/train.csv'
     test_path = '../../data/ctr/test.csv'
     train_X, valid_X, train_y, valid_y, test_y = load_data(train_path, test_path)
-
+    # print(train_X.shape)
     model = train_model(train_X, valid_X, train_y, valid_y)
     # tuning_model(train_X, train_y)

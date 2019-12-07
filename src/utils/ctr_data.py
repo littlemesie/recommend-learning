@@ -23,12 +23,16 @@ IGNORE_COLS = [
 # 加载数据
 def load_data(train_path, test_path):
     need_cols = ["ps_reg_01", "ps_reg_02", "ps_reg_03",  "ps_car_12", "ps_car_13", "ps_car_14", "ps_car_15"]
+
     data = pd.read_csv(train_path)
-    train_data = data[need_cols]
+    # train_data = data[need_cols]
+    train_data = data.drop(['id', 'target'], axis=1)
+    # print(train_data.shape)
     train_label = data["target"]
 
     train_X, valid_X, train_y, valid_y = train_test_split(train_data, train_label, test_size=0.2)
-    test_y = pd.read_csv(test_path)[need_cols]
+    # test_y = pd.read_csv(test_path)[need_cols]
+    test_y = pd.read_csv(test_path).drop(['id'], axis=1)
 
     return train_X, valid_X, train_y, valid_y, test_y
 
