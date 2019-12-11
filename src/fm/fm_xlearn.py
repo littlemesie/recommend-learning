@@ -4,15 +4,19 @@ fm算法
 import xlearn as xl
 import numpy as np
 import pandas as pd
+from sklearn.metrics import auc, roc_curve
 from utils.ctr_data import load_data
 
 def train_model(train_X, valid_X, train_y, valid_y):
     """训练模型"""
-    dtrain = xl.DMatrix(train_X, train_y)
-    dtest = xl.DMatrix(valid_X)
-    fm_model = xl.create_fm()
-    fm_model.setTrain(dtrain)
-    print(dtrain)
+
+    fm_model = xl.FMModel(lr=0.01, reg_lambda=0.001, k=10)
+
+    fm_model.fit(train_X, train_y)
+    y_pred = fm_model.predict(valid_X)
+    fpr, tpr, thresholds = roc_curve(valid_y, np.array(y_pred))
+    aucs = auc(fpr, tpr)
+    print(aucs)
 
 if __name__ == '__main__':
     train_path = '../../data/ctr/train.csv'
