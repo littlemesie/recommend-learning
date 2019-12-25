@@ -122,27 +122,27 @@ if __name__ == '__main__':
         )
     )
 
-    # loss = tf.log(1 + tf.exp(input_y * y_)) + l2_norm
-    #
-    # train_step = tf.train.GradientDescentOptimizer(learning_rate=lr).minimize(loss)
-    #
-    # saver = tf.train.Saver()
-    # with tf.Session() as sess:
-    #     sess.run(tf.global_variables_initializer())
-    #     for i in range(total_plan_train_steps):
-    #         for t in range(all_data_size):
-    #             input_x_batch = trainx[t]
-    #             input_y_batch = trainy[t]
-    #             predict_loss,_, steps = sess.run([loss,train_step, global_step],
-    #                                            feed_dict={input_x: input_x_batch, input_y: input_y_batch})
-    #
-    #             print("After  {step} training   step(s)   ,   loss    on    training    batch   is  {predict_loss} "
-    #                   .format(step=steps, predict_loss=predict_loss))
-    #
-    #             saver.save(sess, os.path.join(MODEL_SAVE_PATH, MODEL_NAME), global_step=steps)
-    #             writer = tf.summary.FileWriter(os.path.join(MODEL_SAVE_PATH, MODEL_NAME), tf.get_default_graph())
-    #             writer.close()
-    #     #
+    loss = tf.log(1 + tf.exp(input_y * y_)) + l2_norm
+
+    train_step = tf.train.GradientDescentOptimizer(learning_rate=lr).minimize(loss)
+
+    saver = tf.train.Saver()
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        for i in range(total_plan_train_steps):
+            for t in range(all_data_size):
+                input_x_batch = trainx[t]
+                input_y_batch = trainy[t]
+                predict_loss,_, steps = sess.run([loss,train_step, global_step],
+                                               feed_dict={input_x: input_x_batch, input_y: input_y_batch})
+
+                print("After  {step} training   step(s)   ,   loss    on    training    batch   is  {predict_loss} "
+                      .format(step=steps, predict_loss=predict_loss))
+
+                saver.save(sess, os.path.join(MODEL_SAVE_PATH, MODEL_NAME), global_step=steps)
+                writer = tf.summary.FileWriter(os.path.join(MODEL_SAVE_PATH, MODEL_NAME), tf.get_default_graph())
+                writer.close()
+        #
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
