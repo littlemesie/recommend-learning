@@ -1,46 +1,25 @@
+"""
+fm算法
+"""
 import xlearn as xl
-from utils import item_profiles
-from utils import movielen_read
+import numpy as np
+import pandas as pd
+from sklearn.metrics import auc, roc_curve
+from utils.ctr_data import load_data
 
-fm_model = xl.create_fm()
-fm_model.setTrain("/Volumes/d/python/xlearn/demo/classification/criteo_ctr/small_train.txt")  # Training data
-# fm_model.setValidate("/Volumes/d/python/xlearn/demo/classification/criteo_ctr/small_test.txt")  # Validation data
+def train_model(train_X, valid_X, train_y, valid_y):
+    """训练模型"""
 
-# param:
-#  0. binary classification
-#  1. learning rate: 0.2
-#  2. regular lambda: 0.002
-#  3. evaluation metric: accuracy
-param = {
-    'task':'binary',
-    'lr':0.2,
-    'lambda':0.002,
-    'metric':'acc'
-}
+    fm_model = xl.FMModel(lr=0.01, reg_lambda=0.001, k=10)
 
-# Start to train
-# The trained model will be stored in model.out
-fm_model.fit(param, './model.out')
-
-# Prediction task
-fm_model.setTest("/Volumes/d/python/xlearn/demo/classification/criteo_ctr/small_test.txt")  # Test data
-fm_model.setSigmoid()  # Convert output to 0-1
-
-# Start to predict
-# The output result will be stored in output.txt
-fm_model.predict("./model.out", "./output.txt")
-
-class FM():
-    """FM推荐"""
-
-    def __init__(self):
-        pass
-
-    def load_data(self):
-        item_features = item_profiles.item_features()
-        print(item_features)
-
+    fm_model.fit(train_X, train_y)
+    y_pred = fm_model.predict(valid_X)
+    fpr, tpr, thresholds = roc_curve(valid_y, np.array(y_pred))
+    aucs = auc(fpr, tpr)
+    print(aucs)
 
 if __name__ == '__main__':
-    fm = FM()
-    # fm.load_data()
+    train_path = '../../data/ctr/train.csv'
+    test_path = '../../data/ctr/test.csv'
+    train_X, valid_X, train_y, valid_y, test_y = load_data(train_path, test_path)
+    train_model(train_X, valid_X, train_y, valid_y)

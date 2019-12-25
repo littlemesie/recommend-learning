@@ -1,5 +1,5 @@
 import pandas as pd
-
+from sklearn.model_selection import train_test_split
 """
 处理数据成libsvm和libsvm格式
 """
@@ -7,7 +7,7 @@ NUMERIC_COLS = [
     "ps_reg_01", "ps_reg_02", "ps_reg_03",
     "ps_car_12", "ps_car_13", "ps_car_14", "ps_car_15",
     # feature engineering
-    "missing_feat", "ps_car_13_x_ps_reg_03",
+    "missing_feat",
 ]
 
 IGNORE_COLS = [
@@ -19,6 +19,22 @@ IGNORE_COLS = [
     "ps_calc_15_bin", "ps_calc_16_bin", "ps_calc_17_bin",
     "ps_calc_18_bin", "ps_calc_19_bin", "ps_calc_20_bin"
 ]
+
+# 加载数据
+def load_data(train_path, test_path):
+    need_cols = ["ps_reg_01", "ps_reg_02", "ps_reg_03",  "ps_car_12", "ps_car_13", "ps_car_14", "ps_car_15"]
+
+    data = pd.read_csv(train_path)
+    # train_data = data[need_cols]
+    train_data = data.drop(['id', 'target'], axis=1)
+    # print(train_data.shape)
+    train_label = data["target"]
+
+    train_X, valid_X, train_y, valid_y = train_test_split(train_data, train_label, test_size=0.2)
+    # test_y = pd.read_csv(test_path)[need_cols]
+    test_y = pd.read_csv(test_path).drop(['id'], axis=1)
+
+    return train_X, valid_X, train_y, valid_y, test_y
 
 
 def gen_feat_dict(df):
@@ -120,6 +136,8 @@ def generation_libffm(data_path, new_path):
 
 
 if __name__ == '__main__':
-    data_path = '../../data/ctr/test.csv'
-    new_path = 'test.csv'
-    generation_libsvm(data_path, new_path)
+    train_path = '../../data/ctr/train.csv'
+    test_path = '../../data/ctr/test.csv'
+    train_data, test_data, train_label = load_data(train_path, test_path)
+    # new_path = 'test.csv'
+    # generation_libsvm(data_path, new_path)

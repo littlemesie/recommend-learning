@@ -5,6 +5,7 @@ GBDT_LR
 import lightgbm as lgb
 import pandas as pd
 import numpy as np
+from sklearn.metrics import auc, roc_curve
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 
@@ -59,9 +60,9 @@ def gbdt_lr_model():
     # train model
     gbm = lgb.train(params, lgb_train, num_boost_round=100, valid_sets=lgb_train)
 
-    print('Save model...')
+    # print('Save model...')
     # save model to file
-    gbm.save_model('model.txt')
+    # gbm.save_model('model.txt')
     print('Start predicting...')
     # predict and get data on leaves, train data
     y_train_pred = gbm.predict(X_train, pred_leaf=True)
@@ -93,10 +94,14 @@ def gbdt_lr_model():
     # Give the probabilty on each label
     y_pred_test = lm.predict_proba(transformed_test_matrix)
 
-    print(y_pred_test)
+    print(y_pred_test[:, 1])
 
-    NE = (-1) / len(y_pred_test) * sum(((1+y_test)/2 * np.log(y_pred_test[:, 1]) + (1-y_test)/2 * np.log(1 - y_pred_test[:, 1])))
-    print("Normalized Cross Entropy " + str(NE))
+    fpr, tpr, thresholds = roc_curve(np.array(y_test), np.array(y_pred_test[:, 1]))
+    aucs = auc(fpr, tpr)
+    print(aucs)
+    #
+    # NE = (-1) / len(y_pred_test) * sum(((1+y_test)/2 * np.log(y_pred_test[:, 1]) + (1-y_test)/2 * np.log(1 - y_pred_test[:, 1])))
+    # print("Normalized Cross Entropy " + str(NE))
 
 if __name__ == '__main__':
     # X_train, y_train, X_test, y_test, lgb_train, lgb_test = load_data()

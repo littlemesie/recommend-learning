@@ -35,7 +35,7 @@ def load_data():
     X_test = dfTest[cols].values
     ids_test = dfTest['id'].values
 
-    cat_features_indices = [i for i,c in enumerate(cols) if c in config.CATEGORICAL_COLS]
+    cat_features_indices = [i for i, c in enumerate(cols) if c in config.CATEGORICAL_COLS]
 
     return dfTrain, dfTest, X_train, y_train, X_test, ids_test, cat_features_indices
 
