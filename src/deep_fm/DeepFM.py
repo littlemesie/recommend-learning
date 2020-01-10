@@ -47,7 +47,7 @@ class DeepFM(BaseEstimator, TransformerMixin):
         self.loss_type = loss_type
         self.eval_metric = eval_metric
         self.greater_is_better = greater_is_better
-        self.train_result,self.valid_result = [],[]
+        self.train_result, self.valid_result = [], []
 
         self._init_graph()
 
@@ -56,12 +56,8 @@ class DeepFM(BaseEstimator, TransformerMixin):
         with self.graph.as_default():
             tf.set_random_seed(self.random_seed)
 
-            self.feat_index = tf.placeholder(tf.int32,
-                                             shape=[None, None],
-                                             name='feat_index')
-            self.feat_value = tf.placeholder(tf.float32,
-                                           shape=[None, None],
-                                           name='feat_value')
+            self.feat_index = tf.placeholder(tf.int32, shape=[None, None], name='feat_index')
+            self.feat_value = tf.placeholder(tf.float32, shape=[None, None], name='feat_value')
 
             self.label = tf.placeholder(tf.float32, shape=[None, 1], name='label')
             self.dropout_keep_fm = tf.placeholder(tf.float32, shape=[None], name='dropout_keep_fm')
@@ -70,8 +66,9 @@ class DeepFM(BaseEstimator, TransformerMixin):
 
             self.weights = self._initialize_weights()
 
-            # model
-            self.embeddings = tf.nn.embedding_lookup(self.weights['feature_embeddings'], self.feat_index) # N * F * K
+            ## model
+            # N * F * K
+            self.embeddings = tf.nn.embedding_lookup(self.weights['feature_embeddings'], self.feat_index)
             feat_value = tf.reshape(self.feat_value, shape=[-1, self.field_size, 1])
             self.embeddings = tf.multiply(self.embeddings, feat_value)
 
@@ -92,12 +89,12 @@ class DeepFM(BaseEstimator, TransformerMixin):
 
             #second order
             self.y_second_order = 0.5 * tf.subtract(self.summed_features_emb_square,self.squared_sum_features_emb)
-            self.y_second_order = tf.nn.dropout(self.y_second_order,self.dropout_keep_fm[1])
+            self.y_second_order = tf.nn.dropout(self.y_second_order, self.dropout_keep_fm[1])
 
 
             # Deep component
-            self.y_deep = tf.reshape(self.embeddings,shape=[-1,self.field_size * self.embedding_size])
-            self.y_deep = tf.nn.dropout(self.y_deep,self.dropout_keep_deep[0])
+            self.y_deep = tf.reshape(self.embeddings, shape=[-1, self.field_size * self.embedding_size])
+            self.y_deep = tf.nn.dropout(self.y_deep, self.dropout_keep_deep[0])
 
             for i in range(0,len(self.deep_layers)):
                 self.y_deep = tf.add(tf.matmul(self.y_deep,self.weights["layer_%d" %i]), self.weights["bias_%d"%i])
@@ -168,23 +165,23 @@ class DeepFM(BaseEstimator, TransformerMixin):
     def _initialize_weights(self):
         weights = dict()
 
-        #embeddings
+        # embeddings
         weights['feature_embeddings'] = tf.Variable(
-            tf.random_normal([self.feature_size,self.embedding_size],0.0,0.01),
-            name='feature_embeddings')
-        weights['feature_bias'] = tf.Variable(tf.random_normal([self.feature_size,1],0.0,1.0),name='feature_bias')
+            tf.random_normal([self.feature_size, self.embedding_size], 0.0, 0.01), name='feature_embeddings'
+        )
+        weights['feature_bias'] = tf.Variable(tf.random_normal([self.feature_size, 1], 0.0, 1.0), name='feature_bias')
 
 
-        #deep layers
+        # deep layers
         num_layer = len(self.deep_layers)
         input_size = self.field_size * self.embedding_size
         glorot = np.sqrt(2.0/(input_size + self.deep_layers[0]))
 
         weights['layer_0'] = tf.Variable(
-            np.random.normal(loc=0,scale=glorot,size=(input_size,self.deep_layers[0])),dtype=np.float32
+            np.random.normal(loc=0, scale=glorot, size=(input_size, self.deep_layers[0])), dtype=np.float32
         )
         weights['bias_0'] = tf.Variable(
-            np.random.normal(loc=0,scale=glorot,size=(1,self.deep_layers[0])),dtype=np.float32
+            np.random.normal(loc=0, scale=glorot, size=(1, self.deep_layers[0])), dtype=np.float32
         )
 
 
