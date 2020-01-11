@@ -74,21 +74,21 @@ class DeepFM(BaseEstimator, TransformerMixin):
 
 
             # first order term
-            self.y_first_order = tf.nn.embedding_lookup(self.weights['feature_bias'],self.feat_index)
-            self.y_first_order = tf.reduce_sum(tf.multiply(self.y_first_order,feat_value),2)
-            self.y_first_order = tf.nn.dropout(self.y_first_order,self.dropout_keep_fm[0])
+            self.y_first_order = tf.nn.embedding_lookup(self.weights['feature_bias'], self.feat_index)
+            self.y_first_order = tf.reduce_sum(tf.multiply(self.y_first_order, feat_value), 2)
+            self.y_first_order = tf.nn.dropout(self.y_first_order, self.dropout_keep_fm[0])
 
             # second order term
             # sum-square-part
-            self.summed_features_emb = tf.reduce_sum(self.embeddings,1) # None * k
-            self.summed_features_emb_square = tf.square(self.summed_features_emb) # None * K
+            self.summed_features_emb = tf.reduce_sum(self.embeddings, 1)  # None * k
+            self.summed_features_emb_square = tf.square(self.summed_features_emb)  # None * K
 
             # squre-sum-part
             self.squared_features_emb = tf.square(self.embeddings)
             self.squared_sum_features_emb = tf.reduce_sum(self.squared_features_emb, 1)  # None * K
 
             #second order
-            self.y_second_order = 0.5 * tf.subtract(self.summed_features_emb_square,self.squared_sum_features_emb)
+            self.y_second_order = 0.5 * tf.subtract(self.summed_features_emb_square, self.squared_sum_features_emb)
             self.y_second_order = tf.nn.dropout(self.y_second_order, self.dropout_keep_fm[1])
 
 
@@ -96,10 +96,10 @@ class DeepFM(BaseEstimator, TransformerMixin):
             self.y_deep = tf.reshape(self.embeddings, shape=[-1, self.field_size * self.embedding_size])
             self.y_deep = tf.nn.dropout(self.y_deep, self.dropout_keep_deep[0])
 
-            for i in range(0,len(self.deep_layers)):
-                self.y_deep = tf.add(tf.matmul(self.y_deep,self.weights["layer_%d" %i]), self.weights["bias_%d"%i])
+            for i in range(0, len(self.deep_layers)):
+                self.y_deep = tf.add(tf.matmul(self.y_deep, self.weights["layer_%d" % i]), self.weights["bias_%d" % i])
                 self.y_deep = self.deep_layers_activation(self.y_deep)
-                self.y_deep = tf.nn.dropout(self.y_deep,self.dropout_keep_deep[i+1])
+                self.y_deep = tf.nn.dropout(self.y_deep, self.dropout_keep_deep[i+1])
 
 
             #----deep_fm---------

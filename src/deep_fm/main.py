@@ -72,32 +72,32 @@ def run_base_model_dfm(df_train, df_test, folds, dfm_params):
         Xi_train_, Xv_train_, y_train_ = _get(Xi_train, train_idx), _get(Xv_train, train_idx), _get(y_train, train_idx)
         Xi_valid_, Xv_valid_, y_valid_ = _get(Xi_train, valid_idx), _get(Xv_train, valid_idx), _get(y_train, valid_idx)
         print(Xv_train_[0])
-    #     dfm = DeepFM.DeepFM(**dfm_params)
-    #     dfm.fit(Xi_train_, Xv_train_, y_train_, Xi_valid_, Xv_valid_, y_valid_)
-    #
-    #     y_train_meta[valid_idx, 0] = dfm.predict(Xi_valid_, Xv_valid_)
-    #     y_test_meta[:, 0] += dfm.predict(Xi_test, Xv_test)
-    #
-    #     gini_results_cv[i] = gini_norm(y_valid_, y_train_meta[valid_idx])
-    #     gini_results_epoch_train[i] = dfm.train_result
-    #     gini_results_epoch_valid[i] = dfm.valid_result
-    #
-    # y_test_meta /= float(len(folds))
-    #
-    # # save result
-    # if dfm_params["use_fm"] and dfm_params["use_deep"]:
-    #     clf_str = "deep_fm"
-    # elif dfm_params["use_fm"]:
-    #     clf_str = "FM"
-    # elif dfm_params["use_deep"]:
-    #     clf_str = "DNN"
-    # print("%s: %.5f (%.5f)" % (clf_str, gini_results_cv.mean(), gini_results_cv.std()))
-    # filename = "%s_Mean%.5f_Std%.5f.csv"%(clf_str, gini_results_cv.mean(), gini_results_cv.std())
-    # _make_submission(ids_test, y_test_meta, filename)
-    #
-    # _plot_fig(gini_results_epoch_train, gini_results_epoch_valid, clf_str)
-    #
-    # return y_train_meta, y_test_meta
+        dfm = DeepFM.DeepFM(**dfm_params)
+        dfm.fit(Xi_train_, Xv_train_, y_train_, Xi_valid_, Xv_valid_, y_valid_)
+
+        y_train_meta[valid_idx, 0] = dfm.predict(Xi_valid_, Xv_valid_)
+        y_test_meta[:, 0] += dfm.predict(Xi_test, Xv_test)
+
+        gini_results_cv[i] = gini_norm(y_valid_, y_train_meta[valid_idx])
+        gini_results_epoch_train[i] = dfm.train_result
+        gini_results_epoch_valid[i] = dfm.valid_result
+
+    y_test_meta /= float(len(folds))
+
+    # save result
+    if dfm_params["use_fm"] and dfm_params["use_deep"]:
+        clf_str = "deep_fm"
+    elif dfm_params["use_fm"]:
+        clf_str = "FM"
+    elif dfm_params["use_deep"]:
+        clf_str = "DNN"
+    print("%s: %.5f (%.5f)" % (clf_str, gini_results_cv.mean(), gini_results_cv.std()))
+    filename = "%s_Mean%.5f_Std%.5f.csv" % (clf_str, gini_results_cv.mean(), gini_results_cv.std())
+    _make_submission(ids_test, y_test_meta, filename)
+
+    _plot_fig(gini_results_epoch_train, gini_results_epoch_valid, clf_str)
+
+    return y_train_meta, y_test_meta
 
 def _make_submission(ids, y_pred, filename="submission.csv"):
     pd.DataFrame({"id": ids, "target": y_pred.flatten()}).to_csv(
@@ -112,13 +112,13 @@ def _plot_fig(train_results, valid_results, model_name):
     for i in range(train_results.shape[0]):
         plt.plot(xs, train_results[i], color=colors[i], linestyle="solid", marker="o")
         plt.plot(xs, valid_results[i], color=colors[i], linestyle="dashed", marker="o")
-        legends.append("train-%d"%(i+1))
-        legends.append("valid-%d"%(i+1))
+        legends.append("train-%d" % (i+1))
+        legends.append("valid-%d" % (i+1))
     plt.xlabel("Epoch")
     plt.ylabel("Normalized Gini")
-    plt.title("%s"%model_name)
+    plt.title("%s" % model_name)
     plt.legend(legends)
-    plt.savefig("fig/%s.png"%model_name)
+    plt.savefig("fig/%s.png" % model_name)
     plt.close()
 
 
@@ -153,9 +153,9 @@ if __name__ == '__main__':
     folds = list(StratifiedKFold(n_splits=config.NUM_SPLITS, shuffle=True,
                                  random_state=config.RANDOM_SEED).split(X_train, y_train))
 
-    run_base_model_dfm(df_train, df_test, folds, dfm_params)
-    #y_train_dfm,y_test_dfm = run_base_model_dfm(dfTrain,dfTest,folds,dfm_params)
-    # y_train_dfm, y_test_dfm = run_base_model_dfm(df_train, df_test, folds, dfm_params)
+
+    # ------------------ DeepFM Model ------------------
+    y_train_dfm, y_test_dfm = run_base_model_dfm(df_train, df_test, folds, dfm_params)
 
 
     # ------------------ FM Model ------------------
