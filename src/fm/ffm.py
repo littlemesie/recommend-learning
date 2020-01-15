@@ -28,8 +28,8 @@ lr = 0.01
 MODEL_SAVE_PATH = "TFModel"
 MODEL_NAME = "FFM"
 
-def createTwoDimensionWeight(input_x_size,field_size,vector_dimension):
-    weights = tf.truncated_normal([input_x_size,field_size,vector_dimension])
+def createTwoDimensionWeight(input_x_size, field_size, vector_dimension):
+    weights = tf.truncated_normal([input_x_size, field_size, vector_dimension])
 
     tf_weights = tf.Variable(weights)
 
@@ -62,15 +62,15 @@ def inference(input_x, input_x_field, zeroWeights, oneDimWeights, thirdWeight):
         for j in range(i+1, input_shape):
             featureIndex2 = j
             fieldIndex2 = int(input_x_field[j])
-            vectorLeft = tf.convert_to_tensor([[featureIndex1,fieldIndex2,i] for i in range(vector_dimension)])
-            weightLeft = tf.gather_nd(thirdWeight,vectorLeft)
+            vectorLeft = tf.convert_to_tensor([[featureIndex1, fieldIndex2, i] for i in range(vector_dimension)])
+            weightLeft = tf.gather_nd(thirdWeight, vectorLeft)
             weightLeftAfterCut = tf.squeeze(weightLeft)
 
-            vectorRight = tf.convert_to_tensor([[featureIndex2,fieldIndex1,i] for i in range(vector_dimension)])
-            weightRight = tf.gather_nd(thirdWeight,vectorRight)
+            vectorRight = tf.convert_to_tensor([[featureIndex2, fieldIndex1, i] for i in range(vector_dimension)])
+            weightRight = tf.gather_nd(thirdWeight, vectorRight)
             weightRightAfterCut = tf.squeeze(weightRight)
 
-            tempValue = tf.reduce_sum(tf.multiply(weightLeftAfterCut,weightRightAfterCut))
+            tempValue = tf.reduce_sum(tf.multiply(weightLeftAfterCut, weightRightAfterCut))
 
             indices2 = [i]
             indices3 = [j]
@@ -96,11 +96,11 @@ def gen_data():
 
 
 if __name__ == '__main__':
-    global_step = tf.Variable(0,trainable=False)
-    trainx,trainy,trainx_field = gen_data()
+    global_step = tf.Variable(0, trainable=False)
+    trainx, trainy, trainx_field = gen_data()
 
 
-    input_x = tf.placeholder(tf.float32,[input_x_size ])
+    input_x = tf.placeholder(tf.float32, [input_x_size])
     input_y = tf.placeholder(tf.float32)
 
     lambda_w = tf.constant(0.001, name='lambda_w')
@@ -133,7 +133,7 @@ if __name__ == '__main__':
             for t in range(all_data_size):
                 input_x_batch = trainx[t]
                 input_y_batch = trainy[t]
-                predict_loss,_, steps = sess.run([loss,train_step, global_step],
+                predict_loss, _, steps = sess.run([loss, train_step, global_step],
                                                feed_dict={input_x: input_x_batch, input_y: input_y_batch})
 
                 print("After  {step} training   step(s)   ,   loss    on    training    batch   is  {predict_loss} "
@@ -142,7 +142,6 @@ if __name__ == '__main__':
                 saver.save(sess, os.path.join(MODEL_SAVE_PATH, MODEL_NAME), global_step=steps)
                 writer = tf.summary.FileWriter(os.path.join(MODEL_SAVE_PATH, MODEL_NAME), tf.get_default_graph())
                 writer.close()
-        #
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())

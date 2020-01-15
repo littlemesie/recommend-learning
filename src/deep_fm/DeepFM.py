@@ -213,6 +213,7 @@ class DeepFM(BaseEstimator, TransformerMixin):
 
 
     def get_batch(self, Xi, Xv, y, batch_size, index):
+        """"""
         start = index * batch_size
         end = (index + 1) * batch_size
         end = end if end < len(y) else len(y)
@@ -271,20 +272,21 @@ class DeepFM(BaseEstimator, TransformerMixin):
 
 
     def fit_on_batch(self, Xi, Xv,y):
-        feed_dict = {self.feat_index:Xi,
-                     self.feat_value:Xv,
-                     self.label:y,
-                     self.dropout_keep_fm:self.dropout_fm,
-                     self.dropout_keep_deep:self.dropout_dep,
-                     self.train_phase:True}
+        """train each batch data"""
+        feed_dict = {
+            self.feat_index: Xi,
+            self.feat_value: Xv,
+            self.label: y,
+            self.dropout_keep_fm: self.dropout_fm,
+            self.dropout_keep_deep: self.dropout_dep,
+            self.train_phase: True
+        }
 
-        loss,opt = self.sess.run([self.loss, self.optimizer], feed_dict=feed_dict)
+        loss, opt = self.sess.run([self.loss, self.optimizer], feed_dict=feed_dict)
 
         return loss
 
-    def fit(self, Xi_train, Xv_train, y_train,
-            Xi_valid=None, Xv_valid=None, y_valid=None,
-            early_stopping=False, refit=False):
+    def fit(self, Xi_train, Xv_train, y_train, Xi_valid=None, Xv_valid=None, y_valid=None, early_stopping=False, refit=False):
         """
         :param Xi_train: [[ind1_1, ind1_2, ...], [ind2_1, ind2_2, ...], ..., [indi_1, indi_2, ..., indi_j, ...], ...]
                          indi_j is the feature index of feature field j of sample i in the training set
@@ -306,7 +308,8 @@ class DeepFM(BaseEstimator, TransformerMixin):
             total_batch = int(len(y_train) / self.batch_size)
             for i in range(total_batch):
                 Xi_batch, Xv_batch, y_batch = self.get_batch(Xi_train, Xv_train, y_train, self.batch_size, i)
-                self.fit_on_batch(Xi_batch, Xv_batch, y_batch)
+                loss = self.fit_on_batch(Xi_batch, Xv_batch, y_batch)
+                print("epoch=%d, loss=%.4f" % (epoch + 1, loss))
 
             # evaluate training and validation datasets
             train_result = self.evaluate(Xi_train, Xv_train, y_train)
@@ -339,9 +342,9 @@ class DeepFM(BaseEstimator, TransformerMixin):
                 self.shuffle_in_unison_scary(Xi_train, Xv_train, y_train)
                 total_batch = int(len(y_train) / self.batch_size)
                 for i in range(total_batch):
-                    Xi_batch, Xv_batch, y_batch = self.get_batch(Xi_train, Xv_train, y_train,
-                                                                self.batch_size, i)
+                    Xi_batch, Xv_batch, y_batch = self.get_batch(Xi_train, Xv_train, y_train, self.batch_size, i)
                     self.fit_on_batch(Xi_batch, Xv_batch, y_batch)
+
                 # check
                 train_result = self.evaluate(Xi_train, Xv_train, y_train)
                 if abs(train_result - best_train_score) < 0.001 or \
