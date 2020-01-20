@@ -36,8 +36,8 @@ def judge_genres(genres):
     genres_list = np.zeros(len(genres_lables), dtype=int)
     for genre in genres:
         if genre in genres_lables:
-            index = genres_lables.index(genre)
-            genres_list[index] = 1
+            ind = genres_lables.index(genre)
+            genres_list[ind] = 1
     return list(genres_list)
 
 def item_features():
