@@ -1,18 +1,16 @@
 import pandas as pd
 
 class FeatureDictionary(object):
-    def __init__(self,trainfile=None,testfile=None,
-                 dfTrain=None,dfTest=None,numeric_cols=[],
-                 ignore_cols=[]):
-        assert not ((trainfile is None) and (dfTrain is None)), "trainfile or dfTrain at least one is set"
-        assert not ((trainfile is not None) and (dfTrain is not None)), "only one can be set"
-        assert not ((testfile is None) and (dfTest is None)), "testfile or dfTest at least one is set"
-        assert not ((testfile is not None) and (dfTest is not None)), "only one can be set"
+    def __init__(self, train_file=None, test_file=None, df_train=None, df_test=None, numeric_cols=None, ignore_cols=None):
+        assert not ((train_file is None) and (df_train is None)), "trainfile or dfTrain at least one is set"
+        assert not ((train_file is not None) and (df_train is not None)), "only one can be set"
+        assert not ((test_file is None) and (df_test is None)), "testfile or dfTest at least one is set"
+        assert not ((test_file is not None) and (df_test is not None)), "only one can be set"
 
-        self.trainfile = trainfile
-        self.testfile = testfile
-        self.dfTrain = dfTrain
-        self.dfTest = dfTest
+        self.train_file = train_file
+        self.test_file = test_file
+        self.df_train = df_train
+        self.df_test = df_test
         self.numeric_cols = numeric_cols
         self.ignore_cols = ignore_cols
         self.gen_feat_dict()
@@ -21,19 +19,23 @@ class FeatureDictionary(object):
 
 
     def gen_feat_dict(self):
-        if self.dfTrain is None:
-            dfTrain = pd.read_csv(self.trainfile)
+        """
+        返回每个特征值对应的索引
+        :return: {'missing_feat': 0, 'ps_car_01_cat': {10: 1, 11: 2, 7: 3, 6: 4, 9: 5, 5: 6, 4: 7, 8: 8, 3: 9, 0: 10, 2: 11, 1: 12, -1: 13}, 'ps_car_02_cat': {1: 14, 0: 15}}
+        """
+        if self.df_train is None:
+            df_train = pd.read_csv(self.train_file)
 
         else:
-            dfTrain = self.dfTrain
+            df_train = self.df_train
 
-        if self.dfTest is None:
-            dfTest = pd.read_csv(self.testfile)
+        if self.df_test is None:
+            df_test = pd.read_csv(self.test_file)
 
         else:
-            dfTest = self.dfTest
+            df_test = self.df_test
 
-        df = pd.concat([dfTrain,dfTest])
+        df = pd.concat([df_train, df_test])
 
         self.feat_dict = {}
         tc = 0
@@ -46,10 +48,10 @@ class FeatureDictionary(object):
 
             else:
                 us = df[col].unique()
-                # print(col, ':', us)
+
                 self.feat_dict[col] = dict(zip(us, range(tc, len(us)+tc)))
                 tc += len(us)
-        print(self.feat_dict)
+
         self.feat_dim = tc
 
 
@@ -58,6 +60,12 @@ class DataParser(object):
         self.feat_dict = feat_dict
 
     def parse(self, infile=None, df=None, has_label=False):
+        """
+        :param infile:
+        :param df:
+        :param has_label:
+        :return:  xi :列的序号， xv :列的对应的值， y : label
+        """
         assert not ((infile is None) and (df is None)), "infile or df at least one is set"
         assert not ((infile is not None) and (df is not None)), "only one can be set"
 
@@ -69,7 +77,7 @@ class DataParser(object):
 
         if has_label:
             y = dfi['target'].values.tolist()
-            dfi.drop(['id','target'],axis=1,inplace=True)
+            dfi.drop(['id', 'target'], axis=1, inplace=True)
         else:
             ids = dfi['id'].values.tolist()
             dfi.drop(['id'], axis=1, inplace=True)
