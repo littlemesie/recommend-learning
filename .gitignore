@@ -105,6 +105,4 @@ venv.bak/
 .idea/
 runs/
 .DS_Store
-data/
-data/
 .csv
