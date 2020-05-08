@@ -25,7 +25,7 @@ def vectorize_dic(dic, ix=None, p=None, n=0, g=0):
     for k, lis in dic.items():
         for t in range(len(lis)):
             ix[str(lis[t]) + str(k)] = ix.get(str(lis[t]) + str(k), 0) + 1
-            col_ix[i+t*g] = ix[str(lis[t]) + str(k)]
+            col_ix[i + t * g] = ix[str(lis[t]) + str(k)]
         i += 1
 
     row_ix = np.repeat(np.arange(0, n), g)
@@ -57,8 +57,8 @@ def batcher(X_, y_=None, batch_size=-1):
 
 cols = ['user', 'item', 'rating', 'timestamp']
 
-train = pd.read_csv('../../data/ml-100k/ua.base', delimiter='\t', names=cols)
-test = pd.read_csv('../../data/ml-100k/ua.test', delimiter='\t', names=cols)
+train = pd.read_csv('data/ua.base', delimiter='\t', names=cols)
+test = pd.read_csv('data/ua.test', delimiter='\t', names=cols)
 
 x_train, ix = vectorize_dic({'users': train['user'].values,
                             'items': train['item'].values}, n=len(train.index), g=2)
@@ -67,8 +67,6 @@ x_test, ix = vectorize_dic({'users': test['user'].values,
                            'items': test['item'].values}, ix, x_train.shape[1], n=len(test.index), g=2)
 
 
-# print(x_train)
-# print(ix)
 y_train = train['rating'].values
 y_test = test['rating'].values
 #
@@ -77,6 +75,9 @@ x_test = x_test.todense()
 
 # print(x_train)
 # print(x_train.shape)
+# print(y_train)
+# print(len(y_train))
+# print(ix)
 # print(x_test.shape)
 
 
@@ -132,17 +133,17 @@ with tf.Session() as sess:
     sess.run(init)
 
     for epoch in range(epochs):
+        print("epoch:{}".format(epoch))
         perm = np.random.permutation(x_train.shape[0])
         # iterate over batches
         for bX, bY in batcher(x_train[perm], y_train[perm], batch_size):
             _, t = sess.run([train_op, loss], feed_dict={x: bX.reshape(-1, p), y: bY.reshape(-1, 1)})
             print(t)
 
-
     errors = []
     for bX, bY in batcher(x_test, y_test):
         errors.append(sess.run(error, feed_dict={x: bX.reshape(-1, p), y: bY.reshape(-1, 1)}))
         print(errors)
     RMSE = np.sqrt(np.array(errors).mean())
-    print(RMSE)
+    # print(RMSE)
 

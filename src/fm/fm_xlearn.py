@@ -10,7 +10,13 @@ from utils.ctr_data import load_data
 def train_model(train_X, valid_X, train_y, valid_y):
     """训练模型"""
 
-    fm_model = xl.FMModel(lr=0.01, reg_lambda=0.001, k=10)
+    fm_model = xl.FMModel(
+        lr=0.02,
+        reg_lambda=0.001,
+        k=18,
+        epoch=10,
+        stop_window=4
+    )
 
     fm_model.fit(train_X, train_y)
     y_pred = fm_model.predict(valid_X)

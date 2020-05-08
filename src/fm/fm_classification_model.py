@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from sklearn.metrics import accuracy_score, roc_auc_score
-from fm.utils import *
+from fm.util import *
 class FM(object):
     def __init__(self, vec_dim, feat_num, lr, lamda):
         self.vec_dim = vec_dim
