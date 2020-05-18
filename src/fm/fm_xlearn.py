@@ -20,6 +20,7 @@ def train_model(train_X, valid_X, train_y, valid_y):
 
     fm_model.fit(train_X, train_y)
     y_pred = fm_model.predict(valid_X)
+
     fpr, tpr, thresholds = roc_curve(valid_y, np.array(y_pred))
     aucs = auc(fpr, tpr)
     print(aucs)

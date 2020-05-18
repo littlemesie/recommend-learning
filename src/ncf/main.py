@@ -12,7 +12,7 @@ import numpy as np
 import tensorflow as tf
 
 from ncf import data_reader
-from ncf import ncf
+from ncf import ncf_model
 from ncf import metrics
 
 
@@ -41,9 +41,9 @@ def train(train_data,test_data,user_size,item_size):
         iterator = tf.data.Iterator.from_structure(train_data.output_types,
                                                    train_data.output_shapes)
 
-        model = ncf.NCF(FLAGS.embedding_size, user_size, item_size, FLAGS.lr,
-                        FLAGS.optim, FLAGS.initializer, FLAGS.loss_func, FLAGS.activation,
-                        FLAGS.regularizer, iterator, FLAGS.topK, FLAGS.dropout, is_training=True)
+        model = ncf_model.NCF(FLAGS.embedding_size, user_size, item_size, FLAGS.lr,
+                              FLAGS.optim, FLAGS.initializer, FLAGS.loss_func, FLAGS.activation,
+                              FLAGS.regularizer, iterator, FLAGS.topK, FLAGS.dropout, is_training=True)
 
         model.build()
 
