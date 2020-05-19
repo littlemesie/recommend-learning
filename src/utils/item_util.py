@@ -4,7 +4,7 @@
 @ide: PyCharm
 @author: mesie
 @date: 2019/5/11 10:06
-@summary: Item画像
+@summary: Item
 """
 import re
 import os

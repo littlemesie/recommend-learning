@@ -8,8 +8,8 @@
 """
 
 import numpy as np
-from utils.item_profiles import item_features
-from utils.user_profile import user_item_rating
+from utils.item_util import item_features
+from utils.user_util import user_item_rating
 
 
 def cos_measure(item_feature_vector, user_rated_items_matrix, rate=0.001):

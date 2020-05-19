@@ -4,7 +4,7 @@
 @ide: PyCharm
 @author: mesie
 @date: 2019/5/11 10:06
-@summary: 用户画像
+@summary: 用户
 """
 import os
 import numpy as np
