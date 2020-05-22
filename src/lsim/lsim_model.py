@@ -6,11 +6,14 @@ import math
 import os
 import operator
 from concurrent.futures import ProcessPoolExecutor
+import pyximport
+pyximport.install()
 from lsim import slim_util as slim
+
 
 base_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
 class Data:
-    def __init__(self, dataset='ml-1m'):
+    def __init__(self, dataset='ml-100k'):
         """
         无上下文信息的隐性反馈数据集。
         :param dataset: 使用的数据集名字，当前有'ml-100k','ml-1m'
@@ -81,7 +84,7 @@ class Data:
                 train.append([user, item])
         return train, test
 
-class SLIM:
+class SLIM_Model:
     def __init__(self, data):
         """
         稀疏线性算法。
@@ -289,7 +292,7 @@ if __name__ == '__main__':
 
     data = Data()
     startTime = time.time()
-    recommend = SLIM(data)
+    recommend = SLIM_Model(data)
     recommend.compute_recommendation()
     eva = Evaluation(recommend)
     eva.evaluate()
@@ -307,6 +310,6 @@ if __name__ == '__main__':
     df['time'] = times
     print(df)
 
-    # recommend = SLIM(Data())
+    # recommend = SLIM_Model(Data())
     # recommend.compute_recommendation()
     # Evaluation(recommend).evaluate()
