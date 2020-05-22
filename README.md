@@ -1,6 +1,6 @@
 ## recommend-learning
 
-- [协同过滤](src/cf)
+- [协同过滤](src/basecf)
 - [基于内容](src/cb)
 - [fm](src/fm)
 - [mf](src/mf)

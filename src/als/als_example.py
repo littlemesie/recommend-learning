@@ -4,7 +4,7 @@ os.chdir(os.path.split(os.path.realpath(__file__))[0])
 import sys
 sys.path.append(os.path.abspath(".."))
 
-from cf.als import ALS
+from als.als_model import ALS
 from utils.movielen_read import read_rating_data
 from utils.util import run_time
 
@@ -21,7 +21,6 @@ def main():
     # Train model
     model = ALS()
     model.fit(train, k=3, max_iter=10)
-    print()
 
     print("Showing the predictions of users...")
     # Predictions
