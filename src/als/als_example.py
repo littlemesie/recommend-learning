@@ -57,3 +57,4 @@ def main():
 if __name__ == "__main__":
     main()
     # precision:0.3552, recall:0.1117, coverage:0.0719, popularity:5.5114
+    # time:21.9 s

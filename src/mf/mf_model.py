@@ -95,7 +95,7 @@ class Matrix_Factorization(object):
 
 if __name__ == '__main__':
     base_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-    user_rating = pd.read_csv(base_path + 'ml-latest-small/ratings.csv')
+    user_rating = pd.read_csv(base_path + 'ml-100k/u.data')
 
     aa = Matrix_Factorization(K=2)
     aa.fit(user_rating)
