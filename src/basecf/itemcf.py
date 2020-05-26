@@ -1,10 +1,12 @@
 # coding = utf-8
 
 # 基于项目的协同过滤推荐算法实现
+import os
 import random
-
+import time
 import math
 from operator import itemgetter
+from utils import metric
 
 
 class ItemBasedCF():
@@ -17,7 +19,9 @@ class ItemBasedCF():
         # 将数据集划分为训练集和测试集
         self.trainSet = {}
         self.testSet = {}
-
+        # user和item集合
+        self.user_set = set()
+        self.item_set = set()
         # 用户相似度矩阵
         self.movie_sim_matrix = {}
         self.movie_popular = {}
@@ -28,11 +32,13 @@ class ItemBasedCF():
 
 
     # 读文件得到“用户-电影”数据
-    def get_dataset(self, filename, pivot=0.75):
+    def get_dataset(self, filename, pivot=0.7):
         trainSet_len = 0
         testSet_len = 0
         for line in self.load_file(filename):
-            user, movie, rating, timestamp = line.split(',')
+            user, movie, rating, timestamp = line.split('\t')
+            self.user_set.add(user)
+            self.item_set.add(movie)
             if(random.random() < pivot):
                 self.trainSet.setdefault(user, {})
                 self.trainSet[user][movie] = rating
@@ -108,33 +114,42 @@ class ItemBasedCF():
     # 产生推荐并通过准确率、召回率和覆盖率进行评估
     def evaluate(self):
         print('Evaluating start ...')
-        N = self.n_rec_movie
-        # 准确率和召回率
-        hit = 0
-        rec_count = 0
-        test_count = 0
-        # 覆盖率
-        all_rec_movies = set()
+        test_user_items = dict()
+        # 推荐
+        recommed_dict = dict()
+        for user, v in self.testSet.items():
+            recommed = self.recommend(user)
 
-        for i, user in enumerate(self.trainSet):
-            test_moives = self.testSet.get(user, {})
-            rec_movies = self.recommend(user)
-            for movie, w in rec_movies:
-                if movie in test_moives:
-                    hit += 1
-                all_rec_movies.add(movie)
-            rec_count += N
-            test_count += len(test_moives)
+            recommed_dict.setdefault(user, list())
+            for item, score in recommed:
+                recommed_dict[user].append(item)
+            test_user_items[user] = list(v.keys())
 
-        precision = hit / (1.0 * rec_count)
-        recall = hit / (1.0 * test_count)
-        coverage = len(all_rec_movies) / (1.0 * self.movie_count)
-        print('precisioin=%.4f\trecall=%.4f\tcoverage=%.4f' % (precision, recall, coverage))
+        item_popularity = dict()
+        for user, v in self.trainSet.items():
+            items = v.keys()
+            for item in items:
+                if item in item_popularity:
+                    item_popularity[item] += 1
+                else:
+                    item_popularity.setdefault(item, 1)
+
+        precision = metric.precision(recommed_dict, test_user_items)
+        recall = metric.recall(recommed_dict, test_user_items)
+        coverage = metric.coverage(recommed_dict, self.item_set)
+        popularity = metric.popularity(item_popularity, recommed_dict)
+        print("precision:{:.4f}, recall:{:.4f}, coverage:{:.4f}, popularity:{:.4f}".format(precision, recall, coverage,
+                                                                                           popularity))
 
 
 if __name__ == '__main__':
-    rating_file = '../data/ml-latest-small/ratings.csv'
+    base_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+    t1 = time.time()
+    rating_file = base_path + 'ml-100k/u.data'
     itemCF = ItemBasedCF()
     itemCF.get_dataset(rating_file)
     itemCF.calc_movie_sim()
     itemCF.evaluate()
+    print("time:{}".format(time.time() - t1))
+    # precision:0.3889, recall:0.1229, coverage:0.1320, popularity:5.3988
+    # time:31.43008303642273

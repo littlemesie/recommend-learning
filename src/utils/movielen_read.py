@@ -32,21 +32,33 @@ def loadfile(filename, encoding='UTF-8'):
             yield line
 
 
-def read_rating_data(path=base_path + "ml-1m/ratings.dat", train_rate=1., seed=1):
+def read_rating_data( dataset='ml-100k', train_rate=0.8, seed=1):
 
     """
     载入评分数据
     @param path:  文件路径
-    @param train_rate:   训练集所占整个数据集的比例，默认为1，表示所有的返回数据都是训练集
+    @param train_rate:   训练集所占整个数据集的比例，默认为0.8，表示所有的返回数据都是训练集
     @return: (训练集，测试集) list -- userId, movieId, rating
     """
     trainset = list()
     testset = list()
+    user_set = set()
+    item_set = set()
     random.seed(seed)
+    path = None
+    separator = None
+    if dataset == 'ml-100k':
+        path = base_path + 'ml-100k/u.data'
+        separator = '\t'
+    elif dataset == 'ml-1m':
+        path = base_path + 'ml-1m/ratings.dat'
+        separator = '::'
     for line in loadfile(filename=path):
-        user, movie, rating, _ = line.split('::')
+        user, movie, rating, _ = line.split(separator)
+        user_set.add(user)
+        item_set.add(movie)
         if random.random() < train_rate:
             trainset.append([int(user), int(movie), int(rating)])
         else:
             testset.append([int(user), int(movie), int(rating)])
-    return trainset, testset
+    return trainset, testset, user_set, item_set

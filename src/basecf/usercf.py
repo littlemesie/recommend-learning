@@ -2,9 +2,11 @@
 
 # 基于用户的协同过滤推荐算法实现
 import random
-
+import os
+import time
 import math
 from operator import itemgetter
+from utils import metric
 
 
 class UserBasedCF():
@@ -17,6 +19,9 @@ class UserBasedCF():
         # 将数据集划分为训练集和测试集
         self.trainSet = {}
         self.testSet = {}
+        # user和item集合
+        self.user_set = set()
+        self.item_set = set()
 
         # 用户相似度矩阵
         self.user_sim_matrix = {}
@@ -36,7 +41,9 @@ class UserBasedCF():
         trainSet_len = 0
         testSet_len = 0
         for line in self.load_file(filename):
-            user, movie, rating, timestamp = line.split(',')
+            user, movie, rating, timestamp = line.split('\t')
+            self.user_set.add(user)
+            self.item_set.add(movie)
             if random.random() < pivot:
                 self.trainSet.setdefault(user, {})
                 self.trainSet[user][movie] = rating
@@ -79,7 +86,7 @@ class UserBasedCF():
 
         self.movie_count = len(movie_user)
         print('Total movie number = %d' % self.movie_count)
-        print(movie_user)
+
         print('Build user co-rated movies matrix ...')
         for movie, users in movie_user.items():
             for u in users:
@@ -90,7 +97,7 @@ class UserBasedCF():
                     self.user_sim_matrix[u].setdefault(v, 0)
                     self.user_sim_matrix[u][v] += 1
         print('Build user co-rated movies matrix success!')
-        print(self.user_sim_matrix)
+        # print(self.user_sim_matrix)
         # 计算相似性
         print('Calculating user similarity matrix ...')
         for u, related_users in self.user_sim_matrix.items():
@@ -117,45 +124,53 @@ class UserBasedCF():
                 rank.setdefault(movie, 0)
                 # rank[i] += wuv * rvi (rvi评分)
                 rank[movie] += wuv
-        print(sorted(rank.items(), key=itemgetter(1), reverse=True)[0:N])
+        # print(sorted(rank.items(), key=itemgetter(1), reverse=True)[0:N])
         return sorted(rank.items(), key=itemgetter(1), reverse=True)[0:N]
-
 
 
     def evaluate(self):
         """
-        产生推荐并通过准确率、召回率和覆盖率进行评估
+        产生推荐并通过准确率、召回率和覆盖率等进行评估
         :return:
         """
         print("Evaluation start ...")
-        N = self.n_rec_movie
-        # 准确率和召回率
-        hit = 0
-        rec_count = 0
-        test_count = 0
-        # 覆盖率
-        all_rec_movies = set()
+        test_user_items = dict()
+        # 推荐
+        recommed_dict = dict()
+        for user, v in self.testSet.items():
+            recommed = self.recommend(user)
 
-        for i, user, in enumerate(self.trainSet):
-            test_movies = self.testSet.get(user, {})
-            rec_movies = self.recommend(user)
-            for movie, w in rec_movies:
-                if movie in test_movies:
-                    hit += 1
-                all_rec_movies.add(movie)
-            rec_count += N
-            test_count += len(test_movies)
+            recommed_dict.setdefault(user, list())
+            for item, score in recommed:
+                recommed_dict[user].append(item)
+            test_user_items[user] = list(v.keys())
 
-        precision = hit / (1.0 * rec_count)
-        recall = hit / (1.0 * test_count)
-        coverage = len(all_rec_movies) / (1.0 * self.movie_count)
-        print('precisioin=%.4f\trecall=%.4f\tcoverage=%.4f' % (precision, recall, coverage))
+        item_popularity = dict()
+        for user, v in self.trainSet.items():
+            items = v.keys()
+            for item in items:
+                if item in item_popularity:
+                    item_popularity[item] += 1
+                else:
+                    item_popularity.setdefault(item, 1)
+
+
+        precision = metric.precision(recommed_dict, test_user_items)
+        recall = metric.recall(recommed_dict, test_user_items)
+        coverage = metric.coverage(recommed_dict, self.item_set)
+        popularity = metric.popularity(item_popularity, recommed_dict)
+        print("precision:{:.4f}, recall:{:.4f}, coverage:{:.4f}, popularity:{:.4f}".format(precision, recall, coverage,
+                                                                                           popularity))
 
 
 if __name__ == '__main__':
-    rating_file = '../data/ml-latest-small/test.csv'
+    t1 = time.time()
+    base_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
+    rating_file = base_path + 'ml-100k/u.data'
     userCF = UserBasedCF()
     userCF.get_dataset(rating_file)
     userCF.calc_user_sim()
-    # userCF.evaluate()
-    # userCF.recommend('10')
+    userCF.evaluate()
+    print("time:{}".format(time.time() - t1))
+    # precision:0.3477, recall:0.1314, coverage:0.2235, popularity:5.3497
+    # time:6.163855075836182

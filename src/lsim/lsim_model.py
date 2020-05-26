@@ -293,6 +293,7 @@ if __name__ == '__main__':
     data = Data()
     startTime = time.time()
     recommend = SLIM_Model(data)
+
     recommend.compute_recommendation()
     eva = Evaluation(recommend)
     eva.evaluate()
@@ -313,3 +314,5 @@ if __name__ == '__main__':
     # recommend = SLIM_Model(Data())
     # recommend.compute_recommendation()
     # Evaluation(recommend).evaluate()
+    # precision   recall coverage  popularity     time
+    # 0   27.665%  20.851%  36.147%    5.342081  25.097s
