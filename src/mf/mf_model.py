@@ -6,7 +6,6 @@
 @date: 2019/5/14 22:34
 @summary: 矩阵分解
 """
-
 import os
 import numpy as np
 import pandas as pd
@@ -95,8 +94,8 @@ class Matrix_Factorization(object):
 
 if __name__ == '__main__':
     base_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-    user_rating = pd.read_csv(base_path + 'ml-100k/u.data')
+    user_rating = pd.read_csv(base_path + 'ml-100k/ratings.csv')
 
-    aa = Matrix_Factorization(K=2)
+    aa = Matrix_Factorization(K=10)
     aa.fit(user_rating)
     aa.start()
