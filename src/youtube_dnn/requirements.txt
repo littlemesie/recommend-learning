@@ -1,0 +1,6 @@
+numpy==1.18.3
+pandas==1.0.3
+deepctr==0.7.5
+deepmatch==0.1.3
+faiss-cpu==1.6.3
+tensorflow==1.9.0
