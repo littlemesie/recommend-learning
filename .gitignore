@@ -107,3 +107,5 @@ runs/
 .DS_Store
 .csv
 data/
+graphs/
+model/

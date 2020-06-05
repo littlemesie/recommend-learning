@@ -7,7 +7,8 @@
 @summary:
 """
 
-import os, sys, time
+import os
+import time
 import numpy as np
 import tensorflow as tf
 
@@ -17,26 +18,26 @@ from ncf import metrics
 
 
 
-FLAGS = tf.app.flags.FLAGS
+FLAGS = tf.flags.FLAGS
 
-tf.app.flags.DEFINE_integer('batch_size', 128, 'size of mini-batch.')
-tf.app.flags.DEFINE_integer('negative_num', 4, 'number of negative samples.')
-tf.app.flags.DEFINE_integer('test_neg', 99, 'number of negative samples for test.')
-tf.app.flags.DEFINE_integer('embedding_size', 16, 'the size for embedding user and item.')
-tf.app.flags.DEFINE_integer('epochs', 20, 'the number of epochs.')
-tf.app.flags.DEFINE_integer('topK', 10, 'topk for evaluation.')
-tf.app.flags.DEFINE_string('optim', 'Adam', 'the optimization method.')
-tf.app.flags.DEFINE_string('initializer', 'Xavier', 'the initializer method.')
-tf.app.flags.DEFINE_string('loss_func', 'cross_entropy', 'the loss function.')
-tf.app.flags.DEFINE_string('activation', 'ReLU', 'the activation function.')
-tf.app.flags.DEFINE_string('model_dir', 'model/', 'the dir for saving model.')
-tf.app.flags.DEFINE_float('regularizer', 0.0, 'the regularizer rate.')
-tf.app.flags.DEFINE_float('lr', 0.001, 'learning rate.')
-tf.app.flags.DEFINE_float('dropout', 0.0, 'dropout rate.')
+tf.flags.DEFINE_integer('batch_size', 128, 'size of mini-batch.')
+tf.flags.DEFINE_integer('negative_num', 4, 'number of negative samples.')
+tf.flags.DEFINE_integer('test_neg', 99, 'number of negative samples for test.')
+tf.flags.DEFINE_integer('embedding_size', 16, 'the size for embedding user and item.')
+tf.flags.DEFINE_integer('epochs', 20, 'the number of epochs.')
+tf.flags.DEFINE_integer('topK', 10, 'topk for evaluation.')
+tf.flags.DEFINE_string('optim', 'Adam', 'the optimization method.')
+tf.flags.DEFINE_string('initializer', 'Xavier', 'the initializer method.')
+tf.flags.DEFINE_string('loss_func', 'cross_entropy', 'the loss function.')
+tf.flags.DEFINE_string('activation', 'ReLU', 'the activation function.')
+tf.flags.DEFINE_string('model_dir', 'model/', 'the dir for saving model.')
+tf.flags.DEFINE_float('regularizer', 0.0, 'the regularizer rate.')
+tf.flags.DEFINE_float('lr', 0.001, 'learning rate.')
+tf.flags.DEFINE_float('dropout', 0.0, 'dropout rate.')
 
 
 
-def train(train_data,test_data,user_size,item_size):
+def train(train_data, test_data, user_size, item_size):
     with tf.Session() as sess:
         iterator = tf.data.Iterator.from_structure(train_data.output_types,
                                                    train_data.output_shapes)
@@ -78,11 +79,12 @@ def train(train_data,test_data,user_size,item_size):
             model.get_data()
             start_time = time.time()
             HR,MRR,NDCG = [],[],[]
-            prediction, label = model.step(sess, None)
+            # prediction, label = model.step(sess, None)
             try:
                 while True:
                     prediction, label = model.step(sess, None)
-
+                    print(prediction)
+                    print(label)
                     label = int(label[0])
                     HR.append(metrics.hit(label, prediction))
                     MRR.append(metrics.mrr(label, prediction))
@@ -106,11 +108,9 @@ def main():
      (user_size, item_size),
      (user_bought, user_negative)) = data_reader.load_data()
 
-    print(train_features[:10])
 
     train_data = data_reader.train_input_fn(train_features, train_labels, FLAGS.batch_size,
                                             user_negative, FLAGS.negative_num)
-    # print(train_data)
 
     test_data = data_reader.eval_input_fn(test_features, test_labels,
                                         user_negative, FLAGS.test_neg)
