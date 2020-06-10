@@ -76,12 +76,14 @@ def load_data():
     train_labels = labels.tolist()
 
     test_features = test_data
+
     test_labels = test_data['item'].tolist()
 
     return ((train_features, train_labels),
             (test_features, test_labels),
             (user_size, item_size),
-            (user_bought, user_negative))
+            (user_bought, user_negative),
+            (user_set, item_set))
 
 
 def add_negative(features, user_negative, labels, numbers, is_training):
@@ -166,6 +168,16 @@ if __name__ == '__main__':
     ((train_features, train_labels),
      (test_features, test_labels),
      (user_size, item_size),
-     (user_bought, user_negative)) = load_data()
+     (user_bought, user_negative),
+     (user_set, item_set)) = load_data()
 
-    train_data = train_input_fn(train_features, train_labels, 128, user_negative, 4)
+    item_popularity = dict()
+
+    for item in train_features['item']:
+        if item in item_popularity:
+            item_popularity[item] += 1
+        else:
+            item_popularity.setdefault(item, 1)
+    print(item_popularity)
+    # train_data = train_input_fn(train_features, train_labels, 128, user_negative, 4)
+    # print(train_data.output_types, train_data.output_shapes)

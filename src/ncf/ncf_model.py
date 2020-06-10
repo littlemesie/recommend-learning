@@ -50,7 +50,7 @@ class NCF(object):
         sample = self.iterator.get_next()
         self.user = sample['user']
         self.item = sample['item']
-        self.label = tf.cast(sample['label'],tf.float32)
+        self.label = tf.cast(sample['label'], tf.float32)
 
 
     def inference(self):
@@ -79,24 +79,22 @@ class NCF(object):
             self.loss_func = tf.nn.sigmoid_cross_entropy_with_logits
 
         if self.optim == 'SGD':
-            self.optim = tf.train.GradientDescentOptimizer(self.lr,
-                                                           name='SGD')
+            self.optim = tf.train.GradientDescentOptimizer(self.lr, name='SGD')
         elif self.optim == 'RMSProp':
-            self.optim = tf.train.RMSPropOptimizer(self.lr, decay=0.9,
-                                                   momentum=0.0, name='RMSProp')
+            self.optim = tf.train.RMSPropOptimizer(self.lr, decay=0.9, momentum=0.0, name='RMSProp')
         elif self.optim == 'Adam':
             self.optim = tf.train.AdamOptimizer(self.lr, name='Adam')
 
 
     def create_model(self):
         with tf.name_scope('input'):
-            self.user_onehot = tf.one_hot(self.user,self.user_size,name='user_onehot')
-            self.item_onehot = tf.one_hot(self.item,self.item_size,name='item_onehot')
+            self.user_onehot = tf.one_hot(self.user, self.user_size, name='user_onehot')
+            self.item_onehot = tf.one_hot(self.item, self.item_size, name='item_onehot')
 
         with tf.name_scope('embed'):
-            self.user_embed_GMF = tf.layers.dense(inputs = self.user_onehot,
-                                                  units = self.embed_size,
-                                                  activation = self.activation_func,
+            self.user_embed_GMF = tf.layers.dense(inputs=self.user_onehot,
+                                                  units=self.embed_size,
+                                                  activation=self.activation_func,
                                                   kernel_initializer=self.initializer,
                                                   kernel_regularizer=self.regularizer,
                                                   name='user_embed_GMF')
@@ -124,7 +122,7 @@ class NCF(object):
 
 
         with tf.name_scope("GMF"):
-            self.GMF = tf.multiply(self.user_embed_GMF,self.item_embed_GMF,name='GMF')
+            self.GMF = tf.multiply(self.user_embed_GMF, self.item_embed_GMF, name='GMF')
 
         with tf.name_scope("MLP"):
             self.interaction = tf.concat([self.user_embed_MLP, self.item_embed_MLP],
@@ -155,7 +153,7 @@ class NCF(object):
             self.layer3_MLP = tf.layers.dropout(self.layer3_MLP, rate=self.dropout)
 
         with tf.name_scope('concatenation'):
-            self.concatenation = tf.concat([self.GMF,self.layer3_MLP],axis=-1,name='concatenation')
+            self.concatenation = tf.concat([self.GMF, self.layer3_MLP], axis=-1, name='concatenation')
 
 
             self.logits = tf.layers.dense(inputs= self.concatenation,
@@ -165,7 +163,7 @@ class NCF(object):
                                           kernel_regularizer=self.regularizer,
                                           name='predict')
 
-            self.logits_dense = tf.reshape(self.logits,[-1])
+            self.logits_dense = tf.reshape(self.logits, [-1])
 
         with tf.name_scope("loss"):
 
@@ -213,4 +211,5 @@ class NCF(object):
             indice, item = session.run([self.indice, self.item_replica])
             prediction = np.take(item, indice)
 
-            return prediction, item
+            user = session.run(self.user)
+            return prediction, item, user[0]
