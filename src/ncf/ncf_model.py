@@ -154,10 +154,11 @@ class NCF(object):
 
         with tf.name_scope('concatenation'):
             self.concatenation = tf.concat([self.GMF, self.layer3_MLP], axis=-1, name='concatenation')
+            # self.concatenation = self.GMF
 
 
             self.logits = tf.layers.dense(inputs= self.concatenation,
-                                          units = 1,
+                                          units=1,
                                           activation=None,
                                           kernel_initializer=self.initializer,
                                           kernel_regularizer=self.regularizer,

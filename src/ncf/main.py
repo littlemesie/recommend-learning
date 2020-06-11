@@ -25,7 +25,7 @@ tf.flags.DEFINE_integer('batch_size', 128, 'size of mini-batch.')
 tf.flags.DEFINE_integer('negative_num', 4, 'number of negative samples.')
 tf.flags.DEFINE_integer('test_neg', 99, 'number of negative samples for test.')
 tf.flags.DEFINE_integer('embedding_size', 16, 'the size for embedding user and item.')
-tf.flags.DEFINE_integer('epochs', 20, 'the number of epochs.')
+tf.flags.DEFINE_integer('epochs', 10, 'the number of epochs.')
 tf.flags.DEFINE_integer('topK', 10, 'topk for evaluation.')
 tf.flags.DEFINE_string('optim', 'Adam', 'the optimization method.')
 tf.flags.DEFINE_string('initializer', 'Xavier', 'the initializer method.')
@@ -172,5 +172,11 @@ def main():
 
 if __name__ == '__main__':
     main()
-    # HR is 0.741, MRR is 0.375, NDCG is 0.461
-    # precision is 0.211, recall is 0.012, coverage is 0.605, popularity is 4.509
+    """
+    GFM:
+    HR is 0.735, MRR is 0.374, NDCG is 0.459
+    precision is 0.251, recall is 0.015, coverage is 0.458, popularity is 4.858
+    NFM:
+    HR is 0.741, MRR is 0.375, NDCG is 0.461
+    precision is 0.211, recall is 0.012, coverage is 0.605, popularity is 4.509
+    """
