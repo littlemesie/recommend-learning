@@ -23,7 +23,7 @@ class KMeansRecommend:
         user_id, user_info = load_data()
         # 使用kmeans 进行聚类
         labels = KMeans(n_clusters=120, random_state=0).fit_predict(user_info)
-        print("calinski_harabaz_score:{:.4f}, recall:{:.4f}".format(calinski_harabaz_score(user_info, labels), silhouette_score(user_info, labels)))
+        print("calinski_harabaz_score:{:.4f}, silhouette_score:{:.4f}".format(calinski_harabaz_score(user_info, labels), silhouette_score(user_info, labels)))
 
         for i, label in enumerate(labels):
             self.user_ret.setdefault(user_id[i], label)
@@ -76,17 +76,17 @@ if __name__ == '__main__':
     # print(rec)
 
     # n_clusters=50
-    # calinski_harabaz_score: 101.1684, recall: 0.6761
+    # calinski_harabaz_score: 101.1684, silhouette_score: 0.6761
     # precision:0.1247, recall:0.0130, coverage:0.8524, popularity:4.1485
 
     # n_clusters=80
-    # calinski_harabaz_score:143.6128, recall:0.8463
+    # calinski_harabaz_score:143.6128, silhouette_score:0.8463
     # precision:0.1619, recall:0.0169, coverage:0.8131, popularity:4.3114
 
     # n_clusters=100
-    # calinski_harabaz_score:194.5926, recall:0.9061
+    # calinski_harabaz_score:194.5926, silhouette_score:0.9061
     # precision:0.1744, recall:0.0182, coverage:0.8202, popularity:4.3032
 
     # n_clusters=120
-    # calinski_harabaz_score:298.2859, recall:0.9335
+    # calinski_harabaz_score:298.2859, silhouette_score:0.9335
     # precision:0.1984, recall:0.0207, coverage:0.8125, popularity:4.3404
