@@ -1,4 +1,5 @@
 import random
+import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.metrics import calinski_harabaz_score, silhouette_score
 from cluster.util import load_data, read_rating_data
@@ -16,14 +17,23 @@ class KMeansRecommend:
         self.user_ret = {}
         self.cluster_ret = {}
 
+        self.ch_scores = []
+        self.s_scores = []
+        self.n_clusters = []
 
-    def train(self):
+
+    def train(self, n=10):
         """"""
         self.data, self.user_set, self.item_set = read_rating_data()
         user_id, user_info = load_data()
         # 使用kmeans 进行聚类
-        labels = KMeans(n_clusters=120, random_state=0).fit_predict(user_info)
-        print("calinski_harabaz_score:{:.4f}, silhouette_score:{:.4f}".format(calinski_harabaz_score(user_info, labels), silhouette_score(user_info, labels)))
+        labels = KMeans(n_clusters=n, random_state=0).fit_predict(user_info)
+        ch_score = calinski_harabaz_score(user_info, labels)
+        s_score = silhouette_score(user_info, labels)
+        self.ch_scores.append(ch_score)
+        self.s_scores.append(s_score)
+        self.n_clusters.append(n)
+        print("calinski_harabaz_score:{:.4f}, silhouette_score:{:.4f}".format(ch_score, s_score))
 
         for i, label in enumerate(labels):
             self.user_ret.setdefault(user_id[i], label)
@@ -67,14 +77,24 @@ class KMeansRecommend:
         popularity = metric.popularity(item_popularity, recommed_dict)
         print("precision:{:.4f}, recall:{:.4f}, coverage:{:.4f}, popularity:{:.4f}".format(precision, recall, coverage,
                                                                                            popularity))
+    def plot(self):
+        """"""
+        fig, ax = plt.subplots()
+        ax.plot(self.n_clusters, self.ch_scores, label='calinski harabaz score')
+        ax.plot(self.n_clusters, self.s_scores, label='silhouette score')
+        plt.xlabel('n_clusters')
+        plt.ylabel('output')
+        plt.legend()
+        plt.show()
 
 if __name__ == '__main__':
     km = KMeansRecommend()
-    km.train()
-    km.evaluate()
+    for i in range(50, 200, 10):
+        km.train(n=i)
+    km.plot()
+    # km.evaluate()
     # rec = km.recommend(1)
     # print(rec)
-
     # n_clusters=50
     # calinski_harabaz_score: 101.1684, silhouette_score: 0.6761
     # precision:0.1247, recall:0.0130, coverage:0.8524, popularity:4.1485
