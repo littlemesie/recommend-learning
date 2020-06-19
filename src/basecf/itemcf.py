@@ -6,6 +6,7 @@ import random
 import time
 import math
 from operator import itemgetter
+import numpy as np
 from utils import metric
 
 
@@ -125,6 +126,7 @@ class ItemBasedCF():
                 recommed_dict[user].append(item)
             test_user_items[user] = list(v.keys())
 
+
         item_popularity = dict()
         for user, v in self.trainSet.items():
             items = v.keys()
@@ -140,7 +142,8 @@ class ItemBasedCF():
         popularity = metric.popularity(item_popularity, recommed_dict)
         print("precision:{:.4f}, recall:{:.4f}, coverage:{:.4f}, popularity:{:.4f}".format(precision, recall, coverage,
                                                                                            popularity))
-
+        hit = metric.hit(recommed_dict, test_user_items)
+        print(hit)
 
 if __name__ == '__main__':
     base_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"

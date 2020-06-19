@@ -161,7 +161,8 @@ class UserBasedCF():
         popularity = metric.popularity(item_popularity, recommed_dict)
         print("precision:{:.4f}, recall:{:.4f}, coverage:{:.4f}, popularity:{:.4f}".format(precision, recall, coverage,
                                                                                            popularity))
-
+        hit = metric.hit(recommed_dict, test_user_items)
+        print(hit)
 
 if __name__ == '__main__':
     t1 = time.time()

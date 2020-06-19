@@ -8,7 +8,7 @@
 """
 
 import math
-
+from collections import defaultdict
 
 def RMSE(records):
     """
@@ -100,3 +100,16 @@ def popularity(item_popular, recommends):
             popularity += math.log(1. + item_popular.get(item, 0.))
             n += 1
     return popularity / n
+
+def hit(recommends, tests):
+    recommend_cnt = defaultdict(int)
+    test_cnt = defaultdict(int)
+    for user_id, items in recommends.items():
+        for item in items:
+            recommend_cnt[item] = +1
+
+    for user_id, items in tests.items():
+        for item in items:
+            test_cnt[item] = +1
+
+    return sum(recommend_cnt.values()) / sum(test_cnt.values())
