@@ -1,3 +1,5 @@
+import random
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 """
@@ -32,10 +34,34 @@ def load_data(train_path, test_path):
 
     train_X, valid_X, train_y, valid_y = train_test_split(train_data, train_label, test_size=0.2)
     # test_y = pd.read_csv(test_path)[need_cols]
-    test_y = pd.read_csv(test_path).drop(['id'], axis=1)
+    test_data = pd.read_csv(test_path).drop(['id'], axis=1)
 
-    return train_X, valid_X, train_y, valid_y, test_y
+    return train_X, valid_X, train_y, valid_y, test_data
 
+def shuffle_batch(x_batch, y_batch):
+    """"""
+    assert len(x_batch) == len(y_batch)
+    length = len(x_batch)
+    index = [i for i in range(length)]
+    random.shuffle(index)
+    x_batch_shuffle = [x_batch[i] for i in index]
+    y_batch_shuffle = [y_batch[i] for i in index]
+    return x_batch_shuffle, y_batch_shuffle
+
+def get_batch_data(train_x, train_y, batch_size=32):
+    """"""
+    start, end = 0, 0
+    train_y = np.array(train_y)
+    while True:
+        start = end % train_x.shape[0]
+        end = min(train_x.shape[0], start + batch_size)
+        x_batch, y_batch = [], []
+        for i in range(start, end):
+            x_batch.append(train_x.iloc[i, :].values)
+            y_batch.append(train_y[i])
+
+        x_batch_shuffle, y_batch_shuffle = shuffle_batch(x_batch, y_batch)
+        yield x_batch_shuffle, y_batch_shuffle
 
 def gen_feat_dict(df):
     """"""
@@ -138,6 +164,7 @@ def generation_libffm(data_path, new_path):
 if __name__ == '__main__':
     train_path = '../../data/ctr/train.csv'
     test_path = '../../data/ctr/test.csv'
-    train_data, test_data, train_label = load_data(train_path, test_path)
+    train_X, valid_X, train_y, valid_y, test_data = load_data(train_path, test_path)
+    print(valid_X.shape[0])
     # new_path = 'test.csv'
     # generation_libsvm(data_path, new_path)

@@ -1,44 +1,7 @@
 import tensorflow as tf
-
 from sklearn.metrics import accuracy_score, roc_auc_score
 from fm.util import *
-class FM(object):
-    def __init__(self, vec_dim, feat_num, lr, lamda):
-        self.vec_dim = vec_dim
-        self.feat_num = feat_num
-        self.lr = lr
-        self.lamda = lamda
-
-        self._build_graph()
-
-    def _build_graph(self):
-        self.add_input()
-        self.inference()
-
-    def add_input(self):
-        self.x = tf.placeholder(tf.float32, shape=[None, self.feat_num], name='input_x')
-        self.y = tf.placeholder(tf.float32, shape=[None], name='input_y')
-
-    def inference(self):
-        with tf.variable_scope('linear_part'):
-            w0 = tf.get_variable(name='bias', shape=[1], dtype=tf.float32)
-            self.W = tf.get_variable(name='linear_w', shape=[self.feat_num], dtype=tf.float32)
-            self.linear_part = w0 + tf.reduce_sum(tf.multiply(self.x, self.W), axis=1)
-        with tf.variable_scope('interaction_part'):
-            self.V = tf.get_variable(name='interaction_w', shape=[self.feat_num, self.vec_dim], dtype=tf.float32)
-            self.interaction_part = 0.5 * tf.reduce_sum(
-                tf.square(tf.matmul(self.x, self.V)) - tf.matmul(tf.square(self.x), tf.square(self.V)),
-                axis=1
-            )
-        self.y_logits = self.linear_part + self.interaction_part
-        self.y_hat = tf.nn.sigmoid(self.y_logits)
-        self.pred_label = tf.cast(self.y_hat > 0.5, tf.int32)
-        self.loss = -tf.reduce_mean(self.y*tf.log(self.y_hat+1e-8) + (1-self.y)*tf.log(1-self.y_hat+1e-8))
-        self.reg_loss = self.lamda*(tf.reduce_mean(tf.nn.l2_loss(self.W)) + tf.reduce_mean(tf.nn.l2_loss(self.V)))
-        self.total_loss = self.loss + self.reg_loss
-
-        self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.total_loss)
-
+from fm.fm_model import FM
 
 EPOCH = 10
 STEP_PRINT = 200
@@ -51,6 +14,7 @@ LAMDA = 1e-3
 VEC_DIM = 10
 base, test = loadData()
 FEAT_NUM = base.shape[1]-1
+
 
 def eval_acc(pred_label, y):
     acc = accuracy_score(y, pred_label.flatten())
@@ -117,7 +81,8 @@ def run():
         msg = 'Test acc: {0:>6.4}, Test auc: {1:>6.4}'
         print(msg.format(test_acc, test_auc))
 
-run()
+# run()
+
 
 # Iter:  59600, Train acc: 0.8125, Val acc:  0.684, Val auc: 0.7294, Val loss: 0.615628, Flag: *
 # Iter:  59800, Train acc:  0.875, Val acc: 0.6665, Val auc: 0.7282, Val loss: 0.625017, Flag:
