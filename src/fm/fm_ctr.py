@@ -70,3 +70,4 @@ def run():
         print(msg.format(test_acc, test_auc))
 
 run()
+# Test acc:  0.962, Test auc: 0.5603
