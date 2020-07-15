@@ -107,4 +107,5 @@ if __name__ == '__main__':
     # X_train, y_train, X_test, y_test, lgb_train, lgb_test = load_data()
     # print(lgb_train)
     gbdt_lr_model()
+    # auc:0.5502814375510494
 

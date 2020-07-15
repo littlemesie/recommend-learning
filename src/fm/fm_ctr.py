@@ -1,7 +1,7 @@
 import tensorflow as tf
 from sklearn.metrics import accuracy_score, roc_auc_score
 from fm.fm_model import FM
-from utils.ctr_data import load_data, get_batch_data
+from utils.ctr_data import load_data, get_batch_data, get_test_data
 
 def eval_acc(pred_label, y):
     acc = accuracy_score(y, pred_label.flatten())
@@ -10,10 +10,6 @@ def eval_acc(pred_label, y):
 def eval_auc(y_hat, y):
     auc = roc_auc_score(y, y_hat.flatten())
     return auc
-
-def get_test_data(valid_X, valid_y):
-    for test_x, test_y in get_batch_data(valid_X, valid_y, batch_size=valid_X.shape[0]):
-        return test_x, test_y
 
 EPOCH = 10
 STEP_PRINT = 100

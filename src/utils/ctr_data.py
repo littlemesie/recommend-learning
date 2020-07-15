@@ -63,6 +63,13 @@ def get_batch_data(train_x, train_y, batch_size=32):
         x_batch_shuffle, y_batch_shuffle = shuffle_batch(x_batch, y_batch)
         yield x_batch_shuffle, y_batch_shuffle
 
+def get_test_data(test_x, test_y):
+    """获取测试数据"""
+    test_x = np.array(test_x)
+    test_y = np.array(test_y)
+    x_batch_shuffle, y_batch_shuffle = shuffle_batch(test_x, test_y)
+    return x_batch_shuffle, y_batch_shuffle
+
 def gen_feat_dict(df):
     """"""
     tc = 0
@@ -160,11 +167,9 @@ def generation_libffm(data_path, new_path):
     df_data.drop(['id'],axis=1,inplace=True)
     df_data.to_csv(new_path, index=False, header=None)
 
-
 if __name__ == '__main__':
     train_path = '../../data/ctr/train.csv'
     test_path = '../../data/ctr/test.csv'
     train_X, valid_X, train_y, valid_y, test_data = load_data(train_path, test_path)
-    print(valid_X.shape[0])
     # new_path = 'test.csv'
     # generation_libsvm(data_path, new_path)
