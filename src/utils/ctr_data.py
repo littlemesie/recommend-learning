@@ -50,18 +50,29 @@ def shuffle_batch(x_batch, y_batch):
 
 def get_batch_data(train_x, train_y, batch_size=32):
     """"""
-    start, end = 0, 0
+    start = 0
     train_y = np.array(train_y)
-    while True:
-        start = end % train_x.shape[0]
-        end = min(train_x.shape[0], start + batch_size)
-        x_batch, y_batch = [], []
-        for i in range(start, end):
-            x_batch.append(train_x.iloc[i, :].values)
-            y_batch.append(train_y[i])
+    while start < train_x.shape[0]:
+        end = start + batch_size
+        x_batch = np.array(train_x.iloc[start: end, :].values)
+        y_batch = train_y[start: end]
 
+        start = end
         x_batch_shuffle, y_batch_shuffle = shuffle_batch(x_batch, y_batch)
         yield x_batch_shuffle, y_batch_shuffle
+
+    # start, end = 0, 0
+    # train_y = np.array(train_y)
+    # while True:
+    #     start = end % train_x.shape[0]
+    #     end = min(train_x.shape[0], start + batch_size)
+    #     x_batch, y_batch = [], []
+    #     for i in range(start, end):
+    #         x_batch.append(train_x.iloc[i, :].values)
+    #         y_batch.append(train_y[i])
+    #
+    #     x_batch_shuffle, y_batch_shuffle = shuffle_batch(x_batch, y_batch)
+    #     yield x_batch_shuffle, y_batch_shuffle
 
 def get_test_data(test_x, test_y):
     """获取测试数据"""
@@ -171,5 +182,8 @@ if __name__ == '__main__':
     train_path = '../../data/ctr/train.csv'
     test_path = '../../data/ctr/test.csv'
     train_X, valid_X, train_y, valid_y, test_data = load_data(train_path, test_path)
+    # for x_batch, y_batch in get_batch_data(train_X, train_y):
+    #     print(len(x_batch))
+    #     print(len(y_batch))
     # new_path = 'test.csv'
     # generation_libsvm(data_path, new_path)
