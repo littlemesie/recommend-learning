@@ -149,7 +149,6 @@ if __name__ == '__main__':
     # load data
     df_train, df_test, X_train, y_train, X_test, ids_test, cat_features_indices = load_data()
 
-    # folds
     folds = list(StratifiedKFold(n_splits=config.NUM_SPLITS, shuffle=True,
                                  random_state=config.RANDOM_SEED).split(X_train, y_train))
 
