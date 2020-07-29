@@ -5,9 +5,9 @@ from utils.ctr_data import load_data
 EPOCH = 10
 STEP_PRINT = 200
 
-LEARNING_RATE = 1e-4
+LEARNING_RATE = 0.02
 BATCH_SIZE = 32
-LAMDA = 1e-3
+LAMDA = 0.001
 
 VEC_DIM = 10
 
