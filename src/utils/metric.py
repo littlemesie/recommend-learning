@@ -9,6 +9,7 @@
 
 import math
 from collections import defaultdict
+from sklearn.metrics import roc_auc_score, accuracy_score
 
 def RMSE(records):
     """
@@ -113,3 +114,13 @@ def hit(recommends, tests):
             test_cnt[item] = +1
 
     return sum(recommend_cnt.values()) / sum(test_cnt.values())
+
+def eval_acc(pred_label, y):
+    """accuracy"""
+    acc = accuracy_score(y, pred_label.flatten())
+    return acc
+
+def eval_auc(pred_label, y):
+    """auc"""
+    auc = roc_auc_score(y, pred_label.flatten())
+    return auc

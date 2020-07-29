@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import random
 
 user_info_path = 'data/u.user'
@@ -6,7 +7,7 @@ item_info_path = 'data/u.item'
 base_path = 'data/ua.base'
 test_path = 'data/ua.test'
 
-def loadData():
+def load_data():
     user_header = ['user_id', 'age', 'gender', 'occupation', 'zip_code']
     user_info = pd.read_csv(user_info_path, sep='|', names=user_header)
     user_info['age'] = pd.cut(user_info['age'], bins=[0,10,20,30,40,50,60,70,80,90,100],
@@ -46,7 +47,28 @@ def loadData():
     print(test.shape)
     # print(test.head())
     # print(test.dtypes)
+
     return base, test
+
+def transform_data(data):
+    rating = data.rating
+    data = data.drop(columns=['rating'])
+    data_x, data_y = [], []
+    for i in range(data.shape[0]):
+        label = 1 if rating.iloc[i] >= 4 else 0
+        data_y.append(label)
+        single_sample = data.iloc[i, :].values
+        data_x.append(single_sample)
+
+    return np.array(data_x), np.array(data_y)
+
+def get_val_test(test):
+    """split validation data/ test data"""
+    data_x, data_y = transform_data(test)
+    val_x, val_y = data_x[:4000], data_y[:4000]
+    test_x, test_y = data_x[4000:], data_y[4000:]
+
+    return val_x, val_y, test_x, test_y
 
 def shuffleBatch(x_batch, y_batch):
     assert len(x_batch) == len(y_batch)
