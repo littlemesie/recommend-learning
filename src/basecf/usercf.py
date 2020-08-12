@@ -118,12 +118,12 @@ class UserBasedCF():
 
         # v=similar user, wuv=similar factor
         for v, wuv in sorted(self.user_sim_matrix[user].items(), key=itemgetter(1), reverse=True)[0:K]:
-            for movie in self.trainSet[v]:
+            for movie, rvi in self.trainSet[v].items():
                 if movie in watched_movies:
                     continue
                 rank.setdefault(movie, 0)
-                # rank[i] += wuv * rvi (rvi评分)
-                rank[movie] += wuv
+                rank[movie] += wuv * float(rvi)  # rvi评分
+                # rank[movie] += wuv
         # print(sorted(rank.items(), key=itemgetter(1), reverse=True)[0:N])
         return sorted(rank.items(), key=itemgetter(1), reverse=True)[0:N]
 
@@ -139,7 +139,6 @@ class UserBasedCF():
         recommed_dict = dict()
         for user, v in self.testSet.items():
             recommed = self.recommend(user)
-
             recommed_dict.setdefault(user, list())
             for item, score in recommed:
                 recommed_dict[user].append(item)
