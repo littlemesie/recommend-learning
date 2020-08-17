@@ -35,7 +35,7 @@ class ALS(object):
         Arguments:
             X {list} -- 2d list with int or float(user_id, item_id, rating)
         Returns:
-            dict -- The items ratings by users. {user_id: {item_id: rating}}
+            dict -- The users ratings by items. {user_id: {item_id: rating}}
             dict -- The items ratings by users. {item_id: {user_id: rating}}
         """
 
