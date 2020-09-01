@@ -38,3 +38,6 @@ embedded_tags = tf.nn.embedding_lookup_sparse(embedding_params, sp_ids=tags, sp_
 with tf.Session() as s:
   s.run([tf.global_variables_initializer(), tf.tables_initializer()])
   print(s.run([embedded_tags]))
+  print(s.run([tags]))
+  b = tf.sparse_tensor_to_dense(tags)
+  print(s.run(b))
