@@ -229,4 +229,4 @@ def run():
 print("lets run...")
 run()
 # ====== let's test =====
-# Test acc: 0.6142, Test auc: 0.6074
+# Test acc:  0.953, Test auc:  0.514
