@@ -49,48 +49,45 @@ class AFM(BaseEstimator, TransformerMixin):
         with self.graph.as_default():
             tf.set_random_seed(self.random_seed)
 
-            self.feat_index = tf.placeholder(tf.int32,
-                                             shape=[None,None],
-                                             name='feat_index')
-            self.feat_value = tf.placeholder(tf.float32,
-                                           shape=[None,None],
-                                           name='feat_value')
-
-            self.label = tf.placeholder(tf.float32, shape=[None, 1],name='label')
-            self.dropout_keep_deep = tf.placeholder(tf.float32,shape=[None],name='dropout_deep_deep')
+            self.feat_index = tf.placeholder(tf.int32, shape=[None, None], name='feat_index')
+            self.feat_value = tf.placeholder(tf.float32, shape=[None, None], name='feat_value')
+            self.label = tf.placeholder(tf.float32, shape=[None, 1], name='label')
+            self.dropout_keep_deep = tf.placeholder(tf.float32, shape=[None], name='dropout_deep_deep')
             self.train_phase = tf.placeholder(tf.bool, name='train_phase')
 
             self.weights = self._initialize_weights()
 
             # Embeddings
-            self.embeddings = tf.nn.embedding_lookup(self.weights['feature_embeddings'],self.feat_index) # N * F * K
-            feat_value = tf.reshape(self.feat_value,shape=[-1,self.field_size,1])
-            self.embeddings = tf.multiply(self.embeddings,feat_value) # N * F * K
+            self.embeddings = tf.nn.embedding_lookup(self.weights['feature_embeddings'], self.feat_index)  # N * F * K
+            feat_value = tf.reshape(self.feat_value, shape=[-1, self.field_size, 1])
+            self.embeddings = tf.multiply(self.embeddings, feat_value)  # N * F * K
 
             # element_wise
             element_wise_product_list = []
             for i in range(self.field_size):
-                for j in range(i+1,self.field_size):
-                    element_wise_product_list.append(tf.multiply(self.embeddings[:,i,:],self.embeddings[:,j,:])) # None * K
+                for j in range(i+1, self.field_size):
+                    # None * K
+                    element_wise_product_list.append(tf.multiply(self.embeddings[:, i, :], self.embeddings[:, j, :]))
 
-            self.element_wise_product = tf.stack(element_wise_product_list) # (F * F - 1 / 2) * None * K
-            self.element_wise_product = tf.transpose(self.element_wise_product,perm=[1,0,2],name='element_wise_product') # None * (F * F - 1 / 2) *  K
+            self.element_wise_product = tf.stack(element_wise_product_list)  # (F * F - 1 / 2) * None * K
+            self.element_wise_product = tf.transpose(self.element_wise_product, perm=[1, 0, 2],
+                                                     name='element_wise_product')  # None * (F * F - 1 / 2) *  K
 
             # attention part
             num_interactions = int(self.field_size * (self.field_size - 1) / 2)
             # wx+b -> relu(wx+b) -> h*relu(wx+b)
-            self.attention_wx_plus_b = tf.reshape(tf.add(tf.matmul(tf.reshape(self.element_wise_product,shape=(-1,self.embedding_size)),
-                                                                   self.weights['attention_w']),
+            self.attention_wx_plus_b = tf.reshape(tf.add(tf.matmul(tf.reshape(self.element_wise_product, shape=(-1, self.embedding_size)),
+                                                                    self.weights['attention_w']),
                                                          self.weights['attention_b']),
-                                                  shape=[-1,num_interactions,self.attention_size]) # N * ( F * F - 1 / 2) * A
+                                                  shape=[-1, num_interactions, self.attention_size])  # N * ( F * F - 1 / 2) * A
 
             self.attention_exp = tf.exp(tf.reduce_sum(tf.multiply(tf.nn.relu(self.attention_wx_plus_b),
                                                            self.weights['attention_h']),
-                                               axis=2,keepdims=True)) # N * ( F * F - 1 / 2) * 1
+                                               axis=2, keepdims=True))  # N * ( F * F - 1 / 2) * 1
 
-            self.attention_exp_sum = tf.reduce_sum(self.attention_exp,axis=1,keepdims=True) # N * 1 * 1
+            self.attention_exp_sum = tf.reduce_sum(self.attention_exp, axis=1, keepdims=True)  # N * 1 * 1
 
-            self.attention_out = tf.div(self.attention_exp,self.attention_exp_sum,name='attention_out')  # N * ( F * F - 1 / 2) * 1
+            self.attention_out = tf.div(self.attention_exp, self.attention_exp_sum, name='attention_out')   # N * ( F * F - 1 / 2) * 1
 
             self.attention_x_product = tf.reduce_sum(tf.multiply(self.attention_out,self.element_wise_product),axis=1,name='afm') # N * K
 
@@ -150,25 +147,24 @@ class AFM(BaseEstimator, TransformerMixin):
         weights = dict()
         #embeddings
         weights['feature_embeddings'] = tf.Variable(
-            tf.random_normal([self.feature_size,self.embedding_size],0.0,0.01),
-            name='feature_embeddings')
-        weights['feature_bias'] = tf.Variable(tf.random_normal([self.feature_size,1],0.0,1.0),name='feature_bias')
-        weights['bias'] = tf.Variable(tf.constant(0.1),name='bias')
+            tf.random_normal([self.feature_size, self.embedding_size], 0.0, 0.01), name='feature_embeddings')
+        weights['feature_bias'] = tf.Variable(tf.random_normal([self.feature_size, 1], 0.0, 1.0), name='feature_bias')
+        weights['bias'] = tf.Variable(tf.constant(0.1), name='bias')
 
         # attention part
         glorot = np.sqrt(2.0 / (self.attention_size + self.embedding_size))
 
-        weights['attention_w'] = tf.Variable(np.random.normal(loc=0,scale=glorot,size=(self.embedding_size,self.attention_size)),
-                                             dtype=tf.float32,name='attention_w')
+        weights['attention_w'] = tf.Variable(np.random.normal(loc=0, scale=glorot, size=(self.embedding_size,
+                                                        self.attention_size)), dtype=tf.float32, name='attention_w')
 
-        weights['attention_b'] = tf.Variable(np.random.normal(loc=0,scale=glorot,size=(self.attention_size,)),
-                                             dtype=tf.float32,name='attention_b')
+        weights['attention_b'] = tf.Variable(np.random.normal(loc=0, scale=glorot, size=(self.attention_size,)),
+                                             dtype=tf.float32, name='attention_b')
 
-        weights['attention_h'] = tf.Variable(np.random.normal(loc=0,scale=1,size=(self.attention_size,)),
-                                             dtype=tf.float32,name='attention_h')
+        weights['attention_h'] = tf.Variable(np.random.normal(loc=0, scale=1, size=(self.attention_size,)),
+                                             dtype=tf.float32, name='attention_h')
 
 
-        weights['attention_p'] = tf.Variable(np.ones((self.embedding_size,1)),dtype=np.float32)
+        weights['attention_p'] = tf.Variable(np.ones((self.embedding_size, 1)), dtype=np.float32)
 
         return weights
 
