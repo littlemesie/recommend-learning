@@ -1,149 +1,205 @@
-from itertools import count
-from collections import defaultdict
-from scipy.sparse import csr
-import pandas as pd
+from time import time
 import numpy as np
-from sklearn.feature_extraction import DictVectorizer
 import tensorflow as tf
-from tqdm import tqdm_notebook as tqdm
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn import metrics
+from utils.util import shuffle_in_unison_scary
+
+class FM(BaseEstimator, TransformerMixin):
+    def __init__(self, feature_size, field_size, embedding_size=8, dropout_fm=[1.0, 1.0], epoch=10, batch_size=256,
+                 learning_rate=0.001, optimizer="adam", random_seed=2016, loss_type="logloss", eval_metric="auc",
+                 l2_reg=0.0, step_print=200):
+        assert eval_metric in ['auc', 'acc'], "eval_metric error"
+        assert loss_type in ["logloss", "mse"], \
+            "loss_type can be either 'logloss' for classification task or 'mse' for regression task"
+
+        self.feature_size = feature_size
+        self.field_size = field_size
+        self.embedding_size = embedding_size
+
+        self.dropout_fm = dropout_fm
+        self.l2_reg = l2_reg
+
+        self.epoch = epoch
+        self.batch_size = batch_size
+        self.learning_rate = learning_rate
+        self.optimizer_type = optimizer
+
+        self.random_seed = random_seed
+        self.loss_type = loss_type
+        self.eval_metric = eval_metric
+        self.step_print = step_print
+        self.train_result, self.valid_result = [], []
+
+        self._build_graph()
+
+    def _build_graph(self):
+        self.add_input()
+        self.inference()
+
+    def add_input(self):
+        self.feat_index = tf.placeholder(tf.int32, shape=[None, None], name='feat_index')
+        self.feat_value = tf.placeholder(tf.float32, shape=[None, None], name='feat_value')
+
+        self.label = tf.placeholder(tf.float32, shape=[None, 1], name='label')
+        self.dropout_keep_fm = tf.placeholder(tf.float32, shape=[None], name='dropout_keep_fm')
+        self.train_phase = tf.placeholder(tf.bool, name='train_phase')
+
+    def inference(self):
+
+        with tf.variable_scope('embeddings_weights'):
+            self.weights = dict()
+            self.weights['feature_embeddings'] = tf.Variable(
+                tf.random_normal([self.feature_size, self.embedding_size], 0.0, 0.01), name='feature_embeddings'
+            )
+            self.weights['feature_bias'] = tf.Variable(
+                tf.random_normal([self.feature_size, 1], 0.0, 1.0), name='feature_bias')
+
+            input_size = self.field_size + self.embedding_size
+            glorot = np.sqrt(2.0 / (input_size + 1))
+            self.weights['concat_projection'] = tf.Variable(
+                np.random.normal(loc=0, scale=glorot, size=(input_size, 1)), dtype=np.float32)
+            self.weights['concat_bias'] = tf.Variable(tf.constant(0.01), dtype=np.float32)
+
+        with tf.variable_scope('embeddings'):
+            self.embeddings = tf.nn.embedding_lookup(self.weights['feature_embeddings'], self.feat_index)
+            feat_value = tf.reshape(self.feat_value, shape=[-1, self.field_size, 1])
+            self.embeddings = tf.multiply(self.embeddings, feat_value)
+
+        with tf.variable_scope('linear_part'):
+            self.y_first_order = tf.nn.embedding_lookup(self.weights['feature_bias'], self.feat_index)
+            self.y_first_order = tf.reduce_sum(tf.multiply(self.y_first_order, feat_value), 2)
+            self.y_first_order = tf.nn.dropout(self.y_first_order, self.dropout_keep_fm[0])
+
+        with tf.variable_scope('second_part'):
+            # sum-square-part
+            self.summed_features_emb = tf.reduce_sum(self.embeddings, 1)  # None * k
+            self.summed_features_emb_square = tf.square(self.summed_features_emb)  # None * K
+
+            # squre-sum-part
+            self.squared_features_emb = tf.square(self.embeddings)
+            self.squared_sum_features_emb = tf.reduce_sum(self.squared_features_emb, 1)  # None * K
+
+            # second order
+            self.y_second_order = 0.5 * tf.subtract(self.summed_features_emb_square, self.squared_sum_features_emb)
+            self.y_second_order = tf.nn.dropout(self.y_second_order, self.dropout_keep_fm[1])
+
+        concat_input = tf.concat([self.y_first_order, self.y_second_order], axis=1)
+        self.y_logits = tf.add(tf.matmul(concat_input, self.weights['concat_projection']), self.weights['concat_bias'])
+
+        self.out = tf.nn.sigmoid(self.y_logits)
+        self.pred = tf.cast(self.out > 0.5, tf.int32)
+
+        # loss
+        if self.loss_type == "logloss":
+            logs = tf.losses.log_loss(self.label, self.out)
+            self.loss = tf.reduce_mean(logs)
+        elif self.loss_type == "mse":
+            self.loss = tf.losses.mean_squared_error(self.label, self.out)
+
+        # optimizer
+        if self.optimizer_type == "adam":
+            self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=0.9, beta2=0.999,
+                                                    epsilon=1e-8).minimize(self.loss)
+        elif self.optimizer_type == "adagrad":
+            self.optimizer = tf.train.AdagradOptimizer(learning_rate=self.learning_rate,
+                                                       initial_accumulator_value=1e-8).minimize(self.loss)
+        elif self.optimizer_type == "gd":
+            self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
+        elif self.optimizer_type == "momentum":
+            self.optimizer = tf.train.MomentumOptimizer(learning_rate=self.learning_rate, momentum=0.95).minimize(
+                self.loss)
+
+        # init
+        self.saver = tf.train.Saver()
+        init = tf.global_variables_initializer()
+        self.sess = tf.Session()
+        self.sess.run(init)
+
+    def get_batch(self, Xi, Xv, y, batch_size, index):
+        start = index * batch_size
+        end = (index + 1) * batch_size
+        end = end if end < len(y) else len(y)
+        return Xi[start:end], Xv[start:end], [[y_] for y_ in y[start:end]]
+
+    def evaluate(self, Xi, Xv, y):
+        y_pred = self.predict(Xi, Xv)
+        if self.eval_metric == 'auc':
+            return metrics.roc_auc_score(y, y_pred)
+        else:
+            return metrics.accuracy_score(y, y_pred)
+
+    def predict(self, Xi, Xv):
+        # dummy y
+        dummy_y = [1] * len(Xi)
+        batch_index = 0
+        Xi_batch, Xv_batch, y_batch = self.get_batch(Xi, Xv, dummy_y, self.batch_size, batch_index)
+        y_pred = None
+        while len(Xi_batch) > 0:
+            num_batch = len(y_batch)
+            feed_dict = {self.feat_index: Xi_batch,
+                         self.feat_value: Xv_batch,
+                         self.label: y_batch,
+                         self.dropout_keep_fm: [1.0] * len(self.dropout_fm),
+                         self.train_phase: False}
+
+            batch_out = self.sess.run(self.out, feed_dict=feed_dict)
+
+            if batch_index == 0:
+                y_pred = np.reshape(batch_out, (num_batch,))
+            else:
+                y_pred = np.concatenate((y_pred, np.reshape(batch_out, (num_batch,))))
+
+            batch_index += 1
+            Xi_batch, Xv_batch, y_batch = self.get_batch(Xi, Xv, dummy_y, self.batch_size, batch_index)
+
+        return y_pred
 
 
-def vectorize_dic(dic, ix=None, p=None, n=0, g=0):
-    """
-    dic -- dictionary of feature lists. Keys are the name of features
-    ix -- index generator (default None)
-    p -- dimension of feature space (number of columns in the sparse matrix) (default None)
-    """
-    if ix == None:
-        ix = dict()
+    def fit_on_batch(self, Xi, Xv,y):
+        """train each batch data"""
+        feed_dict = {
+            self.feat_index: Xi,
+            self.feat_value: Xv,
+            self.label: y,
+            self.dropout_keep_fm: self.dropout_fm,
+            self.train_phase: True
+        }
 
-    nz = n * g
+        loss, opt = self.sess.run([self.loss, self.optimizer], feed_dict=feed_dict)
 
-    col_ix = np.empty(nz, dtype=int)
+        return loss
 
-    i = 0
-    for k, lis in dic.items():
-        for t in range(len(lis)):
-            ix[str(lis[t]) + str(k)] = ix.get(str(lis[t]) + str(k), 0) + 1
-            col_ix[i + t * g] = ix[str(lis[t]) + str(k)]
-        i += 1
+    def fit(self, Xi_train, Xv_train, y_train, Xi_valid=None, Xv_valid=None, y_valid=None):
+        """
+        :param Xi_train: [[ind1_1, ind1_2, ...], [ind2_1, ind2_2, ...], ..., [indi_1, indi_2, ..., indi_j, ...], ...]
+                         indi_j is the feature index of feature field j of sample i in the training set
+        :param Xv_train: [[val1_1, val1_2, ...], [val2_1, val2_2, ...], ..., [vali_1, vali_2, ..., vali_j, ...], ...]
+                         vali_j is the feature value of feature field j of sample i in the training set
+                         vali_j can be either binary (1/0, for binary/categorical features) or float (e.g., 10.24, for numerical features)
+        :param y_train: label of each sample in the training set
+        :param Xi_valid: list of list of feature indices of each sample in the validation set
+        :param Xv_valid: list of list of feature values of each sample in the validation set
+        :param y_valid: label of each sample in the validation set
+        :return: None
+        """
+        has_valid = Xv_valid is not None
+        for epoch in range(self.epoch):
+            t1 = time()
+            shuffle_in_unison_scary(Xi_train, Xv_train, y_train)
+            total_batch = int(len(y_train) / self.batch_size)
+            for i in range(total_batch):
+                Xi_batch, Xv_batch, y_batch = self.get_batch(Xi_train, Xv_train, y_train, self.batch_size, i)
+                loss = self.fit_on_batch(Xi_batch, Xv_batch, y_batch)
+                print("epoch=%d, loss=%.4f" % (epoch + 1, loss))
 
-    row_ix = np.repeat(np.arange(0, n), g)
-    data = np.ones(nz)
-    if p == None:
-        p = len(ix)
-    # print(p)
-    ixx = np.where(col_ix < p)
-    # print(ixx)
-    return csr.csr_matrix((data[ixx],  (row_ix[ixx], col_ix[ixx])), shape=(n, p)), ix
-
-
-def batcher(X_, y_=None, batch_size=-1):
-    n_samples = X_.shape[0]
-
-    if batch_size == -1:
-        batch_size = n_samples
-    if batch_size < 1:
-       raise ValueError('Parameter batch_size={} is unsupported'.format(batch_size))
-
-    for i in range(0, n_samples, batch_size):
-        upper_bound = min(i + batch_size, n_samples)
-        ret_x = X_[i:upper_bound]
-        ret_y = None
-        if y_ is not None:
-            ret_y = y_[i:i + batch_size]
-            yield (ret_x, ret_y)
-
-
-cols = ['user', 'item', 'rating', 'timestamp']
-
-train = pd.read_csv('data/ua.base', delimiter='\t', names=cols)
-test = pd.read_csv('data/ua.test', delimiter='\t', names=cols)
-
-x_train, ix = vectorize_dic({'users': train['user'].values,
-                            'items': train['item'].values}, n=len(train.index), g=2)
-
-x_test, ix = vectorize_dic({'users': test['user'].values,
-                           'items': test['item'].values}, ix, x_train.shape[1], n=len(test.index), g=2)
-
-
-y_train = train['rating'].values
-y_test = test['rating'].values
-#
-x_train = x_train.todense()
-x_test = x_test.todense()
-
-# print(x_train)
-# print(x_train.shape)
-# print(y_train)
-# print(len(y_train))
-# print(ix)
-# print(x_test.shape)
-
-
-n, p = x_train.shape
-
-k = 10
-
-x = tf.placeholder('float', [None, p])
-
-y = tf.placeholder('float', [None, 1])
-
-w0 = tf.Variable(tf.zeros([1]))
-w = tf.Variable(tf.zeros([p]))
-
-v = tf.Variable(tf.random_normal([k, p], mean=0, stddev=0.01))
-
-#y_hat = tf.Variable(tf.zeros([n,1]))
-
-linear_terms = tf.add(w0, tf.reduce_sum(tf.multiply(w, x), 1, keepdims=True))  # n * 1
-pair_interactions = 0.5 * tf.reduce_sum(
-    tf.subtract(
-        tf.pow(
-            tf.matmul(x, tf.transpose(v)), 2),
-        tf.matmul(tf.pow(x, 2), tf.transpose(tf.pow(v, 2)))
-    ), axis=1, keepdims=True)
-
-
-y_hat = tf.add(linear_terms, pair_interactions)
-
-lambda_w = tf.constant(0.001, name='lambda_w')
-lambda_v = tf.constant(0.001, name='lambda_v')
-
-l2_norm = tf.reduce_sum(
-    tf.add(
-        tf.multiply(lambda_w, tf.pow(w, 2)),
-        tf.multiply(lambda_v, tf.pow(v, 2))
-    )
-)
-
-error = tf.reduce_mean(tf.square(y-y_hat))
-loss = tf.add(error, l2_norm)
-
-
-train_op = tf.train.GradientDescentOptimizer(learning_rate=0.01).minimize(loss)
-
-
-epochs = 10
-batch_size = 1000
-
-# Launch the graph
-init = tf.global_variables_initializer()
-with tf.Session() as sess:
-    sess.run(init)
-
-    for epoch in range(epochs):
-        print("epoch:{}".format(epoch))
-        perm = np.random.permutation(x_train.shape[0])
-        # iterate over batches
-        for bX, bY in batcher(x_train[perm], y_train[perm], batch_size):
-            _, t = sess.run([train_op, loss], feed_dict={x: bX.reshape(-1, p), y: bY.reshape(-1, 1)})
-            print(t)
-
-    errors = []
-    for bX, bY in batcher(x_test, y_test):
-        errors.append(sess.run(error, feed_dict={x: bX.reshape(-1, p), y: bY.reshape(-1, 1)}))
-        print(errors)
-    RMSE = np.sqrt(np.array(errors).mean())
-    # print(RMSE)
+            # evaluate training and validation datasets
+            train_result = self.evaluate(Xi_train, Xv_train, y_train)
+            self.train_result.append(train_result)
+            if has_valid:
+                valid_result = self.evaluate(Xi_valid, Xv_valid, y_valid)
+                self.valid_result.append(valid_result)
+                print("[%d] train-result=%.4f, valid-result=%.4f [%.1f s]" % (epoch + 1, train_result, valid_result, time() - t1))
+            else:
+                print("[%d] train-result=%.4f [%.1f s]" % (epoch + 1, train_result, time() - t1))
 

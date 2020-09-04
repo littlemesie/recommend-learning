@@ -9,6 +9,7 @@
 import os
 import pickle
 import time
+import numpy as np
 
 
 def save_file(filepath, data):
@@ -74,3 +75,11 @@ def run_time(fn):
             unit = "s"
         print("Total run time is %.1f %s\n" % (ret, unit))
     return inner
+
+def shuffle_in_unison_scary(a, b, c):
+    rng_state = np.random.get_state()
+    np.random.shuffle(a)
+    np.random.set_state(rng_state)
+    np.random.shuffle(b)
+    np.random.set_state(rng_state)
+    np.random.shuffle(c)
