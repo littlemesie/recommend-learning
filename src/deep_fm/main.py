@@ -2,14 +2,12 @@ import os
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.metrics import make_scorer
 from sklearn.model_selection import StratifiedKFold
-from deep_fm.DataReader import FeatureDictionary, DataParser
 from matplotlib import pyplot as plt
-
-import deep_fm.config as config
-from deep_fm.metrics import gini_norm
-from deep_fm import DeepFM
+from utils.metric import gini_norm
+from deep_fm import deepfm
+from utils import config_util as config
+from utils.data_reader_util import FeatureDictionary, DataParser
 
 
 def preprocess(df):
@@ -23,6 +21,12 @@ def load_data():
     """加载数据"""
     df_train = pd.read_csv(config.TRAIN_FILE)
     df_test = pd.read_csv(config.TEST_FILE)
+
+    def preprocess(df):
+        cols = [c for c in df.columns if c not in ['id', 'target']]
+        df["missing_feat"] = np.sum((df[cols] == -1).values, axis=1)
+        df['ps_car_13_x_ps_reg_03'] = df['ps_car_13'] * df['ps_reg_03']
+        return df
 
     df_train = preprocess(df_train)
     df_test = preprocess(df_test)
@@ -40,7 +44,7 @@ def load_data():
 
     return df_train, df_test, X_train, y_train, X_test, ids_test, cat_features_indices
 
-def run_base_model_dfm(df_train, df_test, folds, dfm_params):
+def run(df_train, df_test, folds, dfm_params):
     """运行deepfm"""
     fd = FeatureDictionary(df_train=df_train, df_test=df_test, numeric_cols=config.NUMERIC_COLS,
                            ignore_cols=config.IGNORE_COLS)
@@ -71,8 +75,8 @@ def run_base_model_dfm(df_train, df_test, folds, dfm_params):
 
         Xi_train_, Xv_train_, y_train_ = _get(Xi_train, train_idx), _get(Xv_train, train_idx), _get(y_train, train_idx)
         Xi_valid_, Xv_valid_, y_valid_ = _get(Xi_train, valid_idx), _get(Xv_train, valid_idx), _get(y_train, valid_idx)
-        print(Xv_train_[0])
-        dfm = DeepFM.DeepFM(**dfm_params)
+
+        dfm = deepfm.DeepFM(**dfm_params)
         dfm.fit(Xi_train_, Xv_train_, y_train_, Xi_valid_, Xv_valid_, y_valid_)
 
         y_train_meta[valid_idx, 0] = dfm.predict(Xi_valid_, Xv_valid_)
@@ -85,6 +89,7 @@ def run_base_model_dfm(df_train, df_test, folds, dfm_params):
     y_test_meta /= float(len(folds))
 
     # save result
+    clf_str = 0.0
     if dfm_params["use_fm"] and dfm_params["use_deep"]:
         clf_str = "deep_fm"
     elif dfm_params["use_fm"]:
@@ -92,8 +97,8 @@ def run_base_model_dfm(df_train, df_test, folds, dfm_params):
     elif dfm_params["use_deep"]:
         clf_str = "DNN"
     print("%s: %.5f (%.5f)" % (clf_str, gini_results_cv.mean(), gini_results_cv.std()))
-    filename = "%s_Mean%.5f_Std%.5f.csv" % (clf_str, gini_results_cv.mean(), gini_results_cv.std())
-    _make_submission(ids_test, y_test_meta, filename)
+    # filename = "%s_Mean%.5f_Std%.5f.csv" % (clf_str, gini_results_cv.mean(), gini_results_cv.std())
+    # _make_submission(ids_test, y_test_meta, filename)
 
     _plot_fig(gini_results_epoch_train, gini_results_epoch_valid, clf_str)
 
@@ -154,16 +159,16 @@ if __name__ == '__main__':
 
 
     # ------------------ DeepFM Model ------------------
-    y_train_dfm, y_test_dfm = run_base_model_dfm(df_train, df_test, folds, dfm_params)
+    y_train_dfm, y_test_dfm = run(df_train, df_test, folds, dfm_params)
 
 
     # ------------------ FM Model ------------------
     # fm_params = dfm_params.copy()
     # fm_params["use_deep"] = False
-    # y_train_fm, y_test_fm = run_base_model_dfm(dfTrain, dfTest, folds, fm_params)
+    # y_train_fm, y_test_fm = run(dfTrain, dfTest, folds, fm_params)
     #
     #
     # # ------------------ DNN Model ------------------
     # dnn_params = dfm_params.copy()
     # dnn_params["use_fm"] = False
-    # y_train_dnn, y_test_dnn = run_base_model_dfm(dfTrain, dfTest, folds, dnn_params)
+    # y_train_dnn, y_test_dnn = run(dfTrain, dfTest, folds, dnn_params)

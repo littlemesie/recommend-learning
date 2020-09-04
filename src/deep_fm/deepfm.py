@@ -7,17 +7,11 @@ from sklearn.metrics import roc_auc_score
 
 class DeepFM(BaseEstimator, TransformerMixin):
 
-    def __init__(self, feature_size, field_size,
-                 embedding_size=8, dropout_fm=[1.0, 1.0],
-                 deep_layers=[32, 32], dropout_deep=[0.5, 0.5, 0.5],
-                 deep_layer_activation=tf.nn.relu,
-                 epoch=10, batch_size=256,
-                 learning_rate=0.001, optimizer="adam",
-                 batch_norm=0, batch_norm_decay=0.995,
-                 verbose=False, random_seed=2016,
-                 use_fm=True, use_deep=True,
-                 loss_type="logloss", eval_metric=roc_auc_score,
-                 l2_reg=0.0, greater_is_better=True):
+    def __init__(self, feature_size, field_size, embedding_size=8, dropout_fm=[1.0, 1.0], deep_layers=[32, 32],
+                 dropout_deep=[0.5, 0.5, 0.5], deep_layer_activation=tf.nn.relu, epoch=10, batch_size=256,
+                 learning_rate=0.001, optimizer="adam", batch_norm=0, batch_norm_decay=0.995,
+                 verbose=False, random_seed=2016, use_fm=True, use_deep=True, loss_type="logloss",
+                 eval_metric=roc_auc_score, l2_reg=0.0, greater_is_better=True, step_print=200):
         assert (use_fm or use_deep)
         assert loss_type in ["logloss", "mse"], \
             "loss_type can be either 'logloss' for classification task or 'mse' for regression task"
@@ -47,6 +41,7 @@ class DeepFM(BaseEstimator, TransformerMixin):
         self.loss_type = loss_type
         self.eval_metric = eval_metric
         self.greater_is_better = greater_is_better
+        self.step_print = step_print
         self.train_result, self.valid_result = [], []
 
         self._init_graph()
@@ -91,7 +86,6 @@ class DeepFM(BaseEstimator, TransformerMixin):
             self.y_second_order = 0.5 * tf.subtract(self.summed_features_emb_square, self.squared_sum_features_emb)
             self.y_second_order = tf.nn.dropout(self.y_second_order, self.dropout_keep_fm[1])
 
-
             # Deep component
             self.y_deep = tf.reshape(self.embeddings, shape=[-1, self.field_size * self.embedding_size])
             self.y_deep = tf.nn.dropout(self.y_deep, self.dropout_keep_deep[0])
@@ -110,11 +104,12 @@ class DeepFM(BaseEstimator, TransformerMixin):
             elif self.use_deep:
                 concat_input = self.y_deep
 
-            self.out = tf.add(tf.matmul(concat_input,self.weights['concat_projection']),self.weights['concat_bias'])
+            self.out = tf.add(tf.matmul(concat_input, self.weights['concat_projection']),self.weights['concat_bias'])
+            self.out = tf.nn.sigmoid(self.out)
+            self.pred = tf.cast(self.out > 0.5, tf.int32)
 
             # loss
             if self.loss_type == "logloss":
-                self.out = tf.nn.sigmoid(self.out)
                 self.loss = tf.losses.log_loss(self.label, self.out)
             elif self.loss_type == "mse":
                 self.loss = tf.nn.l2_loss(tf.subtract(self.label, self.out))
@@ -158,13 +153,8 @@ class DeepFM(BaseEstimator, TransformerMixin):
             if self.verbose > 0:
                 print("#params: %d" % total_parameters)
 
-
-
-
-
     def _initialize_weights(self):
         weights = dict()
-
         # embeddings
         weights['feature_embeddings'] = tf.Variable(
             tf.random_normal([self.feature_size, self.embedding_size], 0.0, 0.01), name='feature_embeddings'
@@ -185,7 +175,7 @@ class DeepFM(BaseEstimator, TransformerMixin):
         )
 
 
-        for i in range(1,num_layer):
+        for i in range(1, num_layer):
             glorot = np.sqrt(2.0 / (self.deep_layers[i - 1] + self.deep_layers[i]))
             weights["layer_%d" % i] = tf.Variable(
                 np.random.normal(loc=0, scale=glorot, size=(self.deep_layers[i - 1], self.deep_layers[i])),
@@ -196,7 +186,6 @@ class DeepFM(BaseEstimator, TransformerMixin):
 
 
         # final concat projection layer
-
         if self.use_fm and self.use_deep:
             input_size = self.field_size + self.embedding_size + self.deep_layers[-1]
         elif self.use_fm:
@@ -205,9 +194,9 @@ class DeepFM(BaseEstimator, TransformerMixin):
             input_size = self.deep_layers[-1]
 
         glorot = np.sqrt(2.0/(input_size + 1))
-        weights['concat_projection'] = tf.Variable(np.random.normal(loc=0,scale=glorot,size=(input_size,1)),dtype=np.float32)
-        weights['concat_bias'] = tf.Variable(tf.constant(0.01),dtype=np.float32)
-
+        weights['concat_projection'] = tf.Variable(
+            np.random.normal(loc=0, scale=glorot, size=(input_size, 1)), dtype=np.float32)
+        weights['concat_bias'] = tf.Variable(tf.constant(0.01), dtype=np.float32)
 
         return weights
 
@@ -237,6 +226,7 @@ class DeepFM(BaseEstimator, TransformerMixin):
         :return: metric of the evaluation
         """
         y_pred = self.predict(Xi, Xv)
+        print(y_pred)
         return self.eval_metric(y, y_pred)
 
     def predict(self, Xi, Xv):
@@ -258,6 +248,7 @@ class DeepFM(BaseEstimator, TransformerMixin):
                          self.dropout_keep_fm: [1.0] * len(self.dropout_fm),
                          self.dropout_keep_deep: [1.0] * len(self.dropout_dep),
                          self.train_phase: False}
+
             batch_out = self.sess.run(self.out, feed_dict=feed_dict)
 
             if batch_index == 0:
@@ -309,21 +300,21 @@ class DeepFM(BaseEstimator, TransformerMixin):
             for i in range(total_batch):
                 Xi_batch, Xv_batch, y_batch = self.get_batch(Xi_train, Xv_train, y_train, self.batch_size, i)
                 loss = self.fit_on_batch(Xi_batch, Xv_batch, y_batch)
+
                 print("epoch=%d, loss=%.4f" % (epoch + 1, loss))
 
             # evaluate training and validation datasets
             train_result = self.evaluate(Xi_train, Xv_train, y_train)
             self.train_result.append(train_result)
+            valid_result = 0.0
             if has_valid:
                 valid_result = self.evaluate(Xi_valid, Xv_valid, y_valid)
                 self.valid_result.append(valid_result)
-            if self.verbose > 0 and epoch % self.verbose == 0:
+            if self.verbose:
                 if has_valid:
-                    print("[%d] train-result=%.4f, valid-result=%.4f [%.1f s]"
-                        % (epoch + 1, train_result, valid_result, time() - t1))
+                    print("[%d] train-result=%.4f, valid-result=%.4f [%.1f s]" % (epoch + 1, train_result, valid_result, time() - t1))
                 else:
-                    print("[%d] train-result=%.4f [%.1f s]"
-                        % (epoch + 1, train_result, time() - t1))
+                    print("[%d] train-result=%.4f [%.1f s]" % (epoch + 1, train_result, time() - t1))
             if has_valid and early_stopping and self.training_termination(self.valid_result):
                 break
 
