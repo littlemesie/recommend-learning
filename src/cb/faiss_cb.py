@@ -4,7 +4,7 @@ from utils.item_util import item_features
 
 class FaissCB:
     def __init__(self):
-        self.n_sim_movie = 5
+        self.n_sim_movie = 10
 
     def fit(self, item_matrix):
         num, vec_dim = item_matrix.shape
