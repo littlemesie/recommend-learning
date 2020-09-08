@@ -41,7 +41,7 @@ def judge_genres(genres):
     return list(genres_list)
 
 def item_features():
-    """用户特征矩阵"""
+    """商品特征矩阵"""
     item_feature = {}
     for line in loadfile(base_path + "ml-1m/movies.dat", encoding="ISO-8859-1"):
         arr = line.split("::")
