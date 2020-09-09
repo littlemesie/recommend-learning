@@ -7,7 +7,7 @@ from utils.util import shuffle_in_unison_scary
 
 class FM(BaseEstimator, TransformerMixin):
     def __init__(self, feature_size, field_size, embedding_size=8, dropout_fm=[1.0, 1.0], epoch=10, batch_size=256,
-                 learning_rate=0.001, optimizer="adam", random_seed=2016, loss_type="logloss", eval_metric="auc",
+                 learning_rate=0.001, optimizer="adam", random_seed=2020, loss_type="logloss", eval_metric="auc",
                  l2_reg=0.0, step_print=200):
         assert eval_metric in ['auc', 'acc'], "eval_metric error"
         assert loss_type in ["logloss", "mse"], \
