@@ -43,6 +43,7 @@ def train(train_data, test_data, user_size, item_size):
         iterator = tf.data.Iterator.from_structure(train_data.output_types,
                                                    train_data.output_shapes)
 
+
         model = ncf_model.NCF(FLAGS.embedding_size, user_size, item_size, FLAGS.lr,
                               FLAGS.optim, FLAGS.initializer, FLAGS.loss_func, FLAGS.activation,
                               FLAGS.regularizer, iterator, FLAGS.topK, FLAGS.dropout, is_training=True)
@@ -161,14 +162,14 @@ def main():
     test_data = data_reader.eval_input_fn(test_features, test_labels,
                                         user_negative, FLAGS.test_neg)
 
-    # train(train_data, test_data, user_size, item_size)
-    item_popularity = dict()
-    for item in train_features['item']:
-        if item in item_popularity:
-            item_popularity[item] += 1
-        else:
-            item_popularity.setdefault(item, 1)
-    test(train_data, test_data, user_size, item_size, user_bought, item_set, item_popularity)
+    train(train_data, test_data, user_size, item_size)
+    # item_popularity = dict()
+    # for item in train_features['item']:
+    #     if item in item_popularity:
+    #         item_popularity[item] += 1
+    #     else:
+    #         item_popularity.setdefault(item, 1)
+    # test(train_data, test_data, user_size, item_size, user_bought, item_set, item_popularity)
 
 if __name__ == '__main__':
     main()
