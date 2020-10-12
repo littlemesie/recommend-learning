@@ -109,3 +109,6 @@ runs/
 data/
 graphs/
 model/
+result/
+ckpt/
+fig/
