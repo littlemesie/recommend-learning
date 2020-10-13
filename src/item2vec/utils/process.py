@@ -96,7 +96,7 @@ class ItemNameProcessor(object):
                 print(self.word_list[i], score)
         print('-'*10)
 
-if __name__ == '__main__':
-    data = pd.read_csv("../../../data/item2vec/data.csv")
-    inp = ItemNameProcessor(data, name_col='name')
-    print(inp.word_dict)
+# if __name__ == '__main__':
+#     data = pd.read_csv("../../../data/item2vec/data.csv")
+#     inp = ItemNameProcessor(data, name_col='name')
+#     print(inp.map_to_ix())
