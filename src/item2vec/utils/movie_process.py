@@ -6,7 +6,8 @@ from collections import OrderedDict
 user_info_path = '../../../data/ml-100k/u.user'
 # item_info_path = '../../../data/ml-100k/u.item'
 item_info_path = '../../data/ml-100k/u.item'
-base_path = '../../../data/ml-100k/ua.base'
+base_path = '../../data/ml-100k/ua.base'
+# base_path = '../../../data/ml-100k/ua.base'
 test_path = '../../../data/ml-100k/ua.test'
 
 class MovieProcessor(object):
@@ -54,7 +55,47 @@ class MovieProcessor(object):
 
         return item_index_data
 
+class MovieProcessor_V1(object):
+
+    def __init__(self):
+        self.user_ids, self.item_ids, self.data = self.load_data()
+        self.item_dict = self.get_item_dict()
+        self.item_list = list(self.item_dict.keys())
+        self.item_counts = list(self.item_dict.values())
+        self.user_item_index_data = self.map_to_ix()
+
+    def load_data(self):
+        header = ['user_id', 'item_id', 'rating', 'time']
+        data = pd.read_csv(base_path, sep='\t', names=header, encoding="ISO-8859-1")
+        user_ids = data['user_id'].unique()
+        item_ids = data['item_id'].unique()
+        return user_ids, item_ids, data[['user_id', 'item_id']]
+
+    def get_item_dict(self):
+        self.user_dict = {}
+        item_dict = {}
+        for index, row in self.data.iterrows():
+            self.user_dict.setdefault(row['user_id'], list())
+            self.user_dict[row['user_id']].append(row['item_id'])
+
+            if row['item_id'] in item_dict:
+                item_dict[row['item_id']] += 1
+            else:
+                item_dict.setdefault(row['item_id'], 1)
+
+        return OrderedDict(sorted(item_dict.items(), reverse=True, key=lambda v: v[1]))
+
+    def map_to_ix(self):
+        user_item_index_data = {}
+        item_to_ix = dict(zip(self.item_list, range(len(self.item_list))))
+        self.item_to_ix = item_to_ix
+
+        for user_id, item_ids in self.user_dict.items():
+            user_item_index_data[user_id] = [item_to_ix[item_id] for item_id in item_ids]
+
+        return user_item_index_data
+
 if __name__ == '__main__':
     # load_data()
-    m = MovieProcessor()
-    print(m.map_to_ix())
+    m = MovieProcessor_V1()
+    print(m.user_item_index_data)
