@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import tensorflow as tf
-
+from matplotlib import pyplot as plt
 from itertools import combinations
 from collections import deque
 
@@ -60,6 +60,7 @@ class Item2Vec(object):
         self.step = step
 
         self.item_counts = processor.item_counts
+        self.train_loss = []
 
         self._init_graphs()
 
@@ -181,18 +182,17 @@ class Item2Vec(object):
         for epoch in range(self.epochs):
             print("epoch: {}".format(epoch))
             generator = BatchGenerator(self.batch_size, item_index_data)
+            loss_list = []
             while not generator.finish:
                 batch, labels = generator.next()
                 feed_dict = {self.batch: batch, self.labels: labels}
                 _, loss = self.sess.run([self.train_op, self.loss], feed_dict=feed_dict)
 
-                avg_loss += loss
+                loss_list.append(loss)
                 self.step += 1
-                print("loss: ", '{:.9f}'.format(loss))
-
+                print("step: {}, loss: {:.9f}".format(self.step, loss))
+            self.train_loss.append(np.mean(loss_list))
         self.embed = self.embeddings
-            # print("Cost: ", '{:.9f}'.format(avg_loss))
-        # self.saver.save(self.sess, os.path.join(self.save_path, "model.ckpt"),global_step=self.step)
 
     def predict(self, item_index_data, queyid,  top_N=10):
         """"""
@@ -206,7 +206,7 @@ if __name__ == '__main__':
         "num_negatives": 30,
         "learning_rate": 0.5,
         "batch_size": 64,
-        "epochs": 10,
+        "epochs": 50,
         "step": 0,
         "save_path": "result/",
     }
@@ -215,6 +215,14 @@ if __name__ == '__main__':
     model = Item2Vec(**config)
     model.fit(processor.item_index_data)
     result = model.predict(processor.item_index_data, 10)
+    xs = np.arange(1, config['epochs'] + 1)
+    plt.plot(xs, model.train_loss, color='red', linestyle="solid", marker="o")
+
+    plt.xlabel("Epoch")
+    plt.ylabel("loss")
+    plt.title("item2vec")
+    plt.legend(['train-loss'])
+    plt.show()
     print(result)
     # generator = BatchGenerator(32, processor.item_index_data)
     # while not generator.finish:
