@@ -213,4 +213,4 @@ class NCF(object):
             prediction = np.take(item, indice)
 
             user = session.run(self.user)
-            return prediction, item, user[0]
+            return prediction, item, user[1]
