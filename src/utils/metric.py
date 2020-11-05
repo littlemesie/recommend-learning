@@ -138,3 +138,25 @@ def gini(actual, pred):
 
 def gini_norm(actual, pred):
     return gini(actual, pred) / gini(actual, actual)
+
+def map_(recommends, tests):
+    """
+    Compute the mean average precision (MAP) of a list of ranked items
+    """
+    aps = []
+    for user_id, items in recommends.items():
+        hits = 0
+        sum_precs = 0
+        single_ap = 0
+        ground_truth = tests.get(user_id, [])
+        for n in range(len(items)):
+            if items[n] in ground_truth:
+                hits += 1
+                sum_precs += hits / (n + 1.0)
+
+        if len(ground_truth) > 0:
+            single_ap = sum_precs / len(ground_truth)
+
+        aps.append(single_ap)
+
+    return np.mean(aps)
