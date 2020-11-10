@@ -4,7 +4,7 @@ from tqdm import tqdm
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.models import Model
 from sklearn.preprocessing import LabelEncoder
-from deepctr.inputs import SparseFeat, VarLenSparseFeat
+from deepctr.feature_column import SparseFeat, VarLenSparseFeat
 from deepmatch.models import *
 from deepmatch.utils import sampledsoftmaxloss, recall_N
 from youtube_dnn.preprocess import gen_data_set, gen_model_input, load_data

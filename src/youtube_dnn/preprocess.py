@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.python.keras.preprocessing.sequence import pad_sequences
-from deepctr.inputs import SparseFeat, VarLenSparseFeat
+from deepctr.feature_column import SparseFeat, VarLenSparseFeat
 
 
 
