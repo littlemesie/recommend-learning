@@ -12,3 +12,5 @@ class Dssm:
 
     def _init_graph(self):
         self.graph = tf.Graph()
+
+
