@@ -84,11 +84,12 @@ class Dataset:
 
         self.test_labels = test_data['item'].tolist()
         train_data.sort_values("user", inplace=True)
-        # print(train_data.head())
+        # print(train_data.shape)
         # test_data.sort_values("user", inplace=True)
 
         self.test_list, self.negative_list = self.get_test_list(test_data, user_negative)
         self.train_list = self.get_train_list(train_data)
+        # batch_choice = 'user' 就不需要
         self.train_matrix = self.get_train_matrix(train_data)
 
 

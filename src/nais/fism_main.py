@@ -14,6 +14,7 @@ def training(model, dataset, epochs, num_negatives):
         # initialize for training batches
         batch_begin = time()
         batches = batch.shuffle(dataset, model.batch_choice, num_negatives)
+        # print(batches)
         batch_time = time() - batch_begin
 
         num_batch = len(batches[1])

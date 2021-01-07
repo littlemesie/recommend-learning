@@ -74,7 +74,7 @@ def _preprocess(get_train_batch):  # generate the masked batch list
 
 def _get_train_data_user():
     user_input, item_input, labels, batch_length = [], [], [], []
-    train = _Dataset.train_matrix
+    # train = _Dataset.train_matrix
     trainList = _Dataset.train_list
     num_items = _Dataset.item_size
     num_users = _Dataset.user_size
@@ -82,8 +82,8 @@ def _get_train_data_user():
         if u == 0:
             batch_length.append((1 + _num_negatives) * len(trainList[u]))
         else:
-            # print(u)
             batch_length.append((1 + _num_negatives) * len(trainList[u]) + batch_length[u - 1])
+        # print(batch_length)
         for i in trainList[u]:
             # positive instance
             user_input.append(u)
