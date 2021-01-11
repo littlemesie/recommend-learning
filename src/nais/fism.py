@@ -7,6 +7,16 @@ class FISM:
     def __init__(self, user_size, item_size, lr=0.01, embed_size=16,
                  alpha=0, verbose=1, regs=[1e-7,1e-7], batch_choice="user",
                  train_loss=1):
+        """
+        item_size: item size.
+        lr: Learning rate.
+        embed_size: Embedding size.
+        alpha: Index of coefficient of embedding vector
+        verbose: Interval of evaluation.
+        batch_choice: user: generate batches by user, fixed:batch_size: generate batches by batch size
+        regs: Regularization for user and item embeddings.
+        train_loss: Caculate training loss or nor
+        """
         # self.user_size = user_size
         self.item_size = item_size
 
