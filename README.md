@@ -1,5 +1,5 @@
 ## recommend-learning
-- [数据集](https://pan.baidu.com/s/1Q-Xfz-U7p24SHdCIlDoGMg)链接: https://pan.baidu.com/s/1Q-Xfz-U7p24SHdCIlDoGMg  密码: lv4v
+- [数据集](https://pan.baidu.com/s/17ePYYGS8KoWvqa3vUq_lYg)链接:https://pan.baidu.com/s/17ePYYGS8KoWvqa3vUq_lYg  密码:ooxw
 - [协同过滤](src/basecf)
 - [基于内容](src/cb)
 - [fm](src/fm)
