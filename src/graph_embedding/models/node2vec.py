@@ -3,23 +3,28 @@
 """
 @ide: PyCharm
 @author: mesie
-@date: 2022/3/22 下午2:37
+@date: 2022/5/6 下午2:25
 @summary:
 Reference:
-    [1] Perozzi B, Al-Rfou R, Skiena S. Deepwalk: Online learning of social representations[C]//Proceedings of the 20th ACM SIGKDD international conference on Knowledge discovery and data mining. ACM, 2014: 701-710.(http://www.perozzi.net/publications/14_kdd_deepwalk.pdf)
+    [1] Grover A, Leskovec J. node2vec: Scalable feature learning for networks[C]//Proceedings of the 22nd ACM SIGKDD international conference on Knowledge discovery and data mining. ACM, 2016: 855-864.(https://www.kdd.org/kdd2016/papers/files/rfp0218-groverA.pdf)
 """
-from graph_embedding.walker import RandomWalker
 from gensim.models import Word2Vec
 
+from graph_embedding.walker import RandomWalker
 
-class DeepWalk:
-    def __init__(self, graph, walk_length, num_walks, workers=1):
+
+class Node2Vec:
+
+    def __init__(self, graph, walk_length, num_walks, p=1.0, q=1.0, workers=1, use_rejection_sampling=0):
 
         self.graph = graph
-        self.w2v_model = None
         self._embeddings = {}
+        self.walker = RandomWalker(
+            graph, p=p, q=q, use_rejection_sampling=use_rejection_sampling)
 
-        self.walker = RandomWalker(graph, p=1, q=1, )
+        print("Preprocess transition probs...")
+        self.walker.preprocess_transition_probs()
+
         self.sentences = self.walker.simulate_walks(
             num_walks=num_walks, walk_length=walk_length, workers=workers, verbose=1)
 
@@ -28,8 +33,8 @@ class DeepWalk:
         kwargs["sentences"] = self.sentences
         kwargs["min_count"] = kwargs.get("min_count", 0)
         kwargs["vector_size"] = embed_size
-        kwargs["sg"] = 1  # skip gram
-        kwargs["hs"] = 1  # deepwalk use Hierarchical Softmax
+        kwargs["sg"] = 1
+        kwargs["hs"] = 0  # node2vec not use Hierarchical Softmax
         kwargs["workers"] = workers
         kwargs["window"] = window_size
         kwargs["epochs"] = epochs
@@ -39,6 +44,7 @@ class DeepWalk:
         print("Learning embedding vectors done!")
 
         self.w2v_model = model
+
         return model
 
     def get_embeddings(self,):
