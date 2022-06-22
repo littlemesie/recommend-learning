@@ -1,4 +1,4 @@
-numpy==1.18.3
+numpy==1.22.0
 pandas==1.0.3
 deepctr==0.7.5
 deepmatch==0.1.3
